@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { hasDatabaseUrl } from "@/lib/db-url";
 import { prisma } from "@/lib/prisma";
@@ -29,33 +30,50 @@ export default async function HomePage() {
 
   return (
     <main className="overflow-x-hidden">
-      <section className="relative min-h-[100svh] hero-wash text-pearl">
+      <section className="relative min-h-[100svh] overflow-hidden text-pearl">
+        <Image
+          src="/kayla-hero.jpg"
+          alt="Kayla — kaylathecreateher, natural hair and beauty creator in New York City"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[center_20%] md:object-[72%_18%]"
+        />
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-[#2a141c]/92 via-[#2a141c]/55 to-[#2a141c]/25 md:via-[#2a141c]/45 md:to-transparent"
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-[#2a141c]/80 via-transparent to-[#2a141c]/35"
+          aria-hidden
+        />
         <SiteHeader />
-        <div className="absolute inset-0 opacity-30 soft-grid" aria-hidden />
-        <div className="relative mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-end px-6 pb-16 pt-28 md:pb-24">
-          <p className="reveal text-sm uppercase tracking-[0.28em] text-champagne/90">
-            UGC · New York City
-          </p>
-          <h1 className="reveal-delay mt-4 max-w-4xl font-[family-name:var(--font-display)] text-5xl leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">
-            <span className="brand-sheen">kaylathecreateher</span>
-          </h1>
-          <p className="reveal-delay-2 mt-6 max-w-xl text-base text-pearl/85 md:text-lg">
-            Celebrating natural hair in all its glory — beauty, wellness, lifestyle, and
-            fashion content that helps you feel your most confident self.
-          </p>
-          <div className="reveal-delay-2 mt-8 flex flex-wrap gap-3">
-            <a
-              href="#hire"
-              className="rounded-full bg-pearl px-6 py-3 text-sm font-semibold text-berry transition hover:bg-blush"
-            >
-              Hire Kayla
-            </a>
-            <a
-              href="#work"
-              className="rounded-full border border-pearl/35 px-6 py-3 text-sm text-pearl transition hover:bg-pearl/10"
-            >
-              View content styles
-            </a>
+        <div className="relative mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-end px-6 pb-16 pt-28 md:justify-center md:pb-24">
+          <div className="max-w-xl md:max-w-lg">
+            <p className="reveal text-sm uppercase tracking-[0.28em] text-champagne/90">
+              UGC · New York City
+            </p>
+            <h1 className="reveal-delay mt-4 font-[family-name:var(--font-display)] text-5xl leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">
+              <span className="brand-sheen">kaylathecreateher</span>
+            </h1>
+            <p className="reveal-delay-2 mt-6 text-base text-pearl/90 md:text-lg">
+              Celebrating natural hair in all its glory — beauty, wellness, lifestyle, and
+              fashion content that helps you feel your most confident self.
+            </p>
+            <div className="reveal-delay-2 mt-8 flex flex-wrap gap-3">
+              <a
+                href="#hire"
+                className="rounded-full bg-pearl px-6 py-3 text-sm font-semibold text-berry transition hover:bg-blush"
+              >
+                Hire Kayla
+              </a>
+              <a
+                href="#work"
+                className="rounded-full border border-pearl/35 px-6 py-3 text-sm text-pearl transition hover:bg-pearl/10"
+              >
+                View content styles
+              </a>
+            </div>
           </div>
         </div>
       </section>
