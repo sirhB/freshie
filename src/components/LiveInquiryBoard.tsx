@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type InquiryEvent = {
@@ -47,6 +48,7 @@ export function LiveInquiryBoard({
   initialInquiries: InquiryRow[];
   instagramConfigured: boolean;
 }) {
+  const router = useRouter();
   const [inquiries, setInquiries] = useState(initialInquiries);
   const [status, setStatus] = useState<(typeof STATUSES)[number]>("all");
   const [source, setSource] = useState<(typeof SOURCES)[number]>("all");
@@ -55,19 +57,21 @@ export function LiveInquiryBoard({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [simulating, setSimulating] = useState(false);
 
-  const refresh = useCallback(async () => {
-    const params = new URLSearchParams();
-    if (status !== "all") params.set("status", status);
-    if (source !== "all") params.set("source", source);
-    const res = await fetch(`/api/inquiries?${params.toString()}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    setInquiries(data.inquiries || []);
-  }, [status, source]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const refresh = useCallback(
+    async (
+      statusFilter: (typeof STATUSES)[number] = status,
+      sourceFilter: (typeof SOURCES)[number] = source,
+    ) => {
+      const params = new URLSearchParams();
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (sourceFilter !== "all") params.set("source", sourceFilter);
+      const res = await fetch(`/api/inquiries?${params.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setInquiries(data.inquiries || []);
+    },
+    [status, source],
+  );
 
   useEffect(() => {
     const es = new EventSource("/api/inquiries/stream");
@@ -108,7 +112,7 @@ export function LiveInquiryBoard({
     const data = await res.json();
     setBusyId(null);
     if (res.ok && data.dealId) {
-      window.location.href = `/studio/deals/${data.dealId}`;
+      router.push(`/studio/deals/${data.dealId}`);
       return;
     }
     await refresh();
@@ -175,7 +179,11 @@ export function LiveInquiryBoard({
           Status
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as (typeof STATUSES)[number])}
+            onChange={(e) => {
+              const next = e.target.value as (typeof STATUSES)[number];
+              setStatus(next);
+              void refresh(next, source);
+            }}
             className="ml-2 rounded-full border border-ink/10 bg-white/80 px-3 py-1.5 text-sm normal-case tracking-normal text-ink"
           >
             {STATUSES.map((s) => (
@@ -189,7 +197,11 @@ export function LiveInquiryBoard({
           Source
           <select
             value={source}
-            onChange={(e) => setSource(e.target.value as (typeof SOURCES)[number])}
+            onChange={(e) => {
+              const next = e.target.value as (typeof SOURCES)[number];
+              setSource(next);
+              void refresh(status, next);
+            }}
             className="ml-2 rounded-full border border-ink/10 bg-white/80 px-3 py-1.5 text-sm normal-case tracking-normal text-ink"
           >
             {SOURCES.map((s) => (

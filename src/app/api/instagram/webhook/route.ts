@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import {
   createInquiry,
   logInquiryEvent,
-  serializeInquiry,
 } from "@/lib/inquiries";
 import { publishInquiryEvent } from "@/lib/inquiry-bus";
 import {
