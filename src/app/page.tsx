@@ -40,11 +40,11 @@ export default async function HomePage() {
           className="object-cover object-[center_20%] md:object-[72%_18%]"
         />
         <div
-          className="absolute inset-0 bg-gradient-to-r from-[#2a141c]/92 via-[#2a141c]/55 to-[#2a141c]/25 md:via-[#2a141c]/45 md:to-transparent"
+          className="absolute inset-0 bg-gradient-to-r from-violet/95 via-violet/55 to-violet/20 md:via-violet/40 md:to-transparent"
           aria-hidden
         />
         <div
-          className="absolute inset-0 bg-gradient-to-t from-[#2a141c]/80 via-transparent to-[#2a141c]/35"
+          className="absolute inset-0 bg-gradient-to-t from-ink/85 via-transparent to-violet/40"
           aria-hidden
         />
         <SiteHeader />
@@ -63,7 +63,7 @@ export default async function HomePage() {
             <div className="reveal-delay-2 mt-8 flex flex-wrap gap-3">
               <a
                 href="#hire"
-                className="rounded-full bg-pearl px-6 py-3 text-sm font-semibold text-berry transition hover:bg-blush"
+                className="rounded-full bg-pearl px-6 py-3 text-sm font-semibold text-violet transition hover:bg-lilac"
               >
                 Hire Kayla
               </a>
