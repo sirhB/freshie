@@ -24,7 +24,7 @@ export function getInstagramConfig() {
 export function defaultAutoReplyText(siteUrl: string) {
   return [
     "Hey! Thanks for reaching out to kaylathecreateher ✨",
-    "I create soft glam UGC for hair, beauty, wellness & lifestyle — how-tos, unboxings, demos, and reviews (usually ~4 day turnaround).",
+    "I'm Kayla in NYC — I create content celebrating natural hair, beauty as self-care, wellness, lifestyle, and fashion.",
     `Send a brief here and I’ll triage it in studio: ${siteUrl}/#hire`,
     "Rates typically start around $60–$100 per video. Looking forward to collabing!",
   ].join("\n\n");

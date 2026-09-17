@@ -34,15 +34,14 @@ export default async function HomePage() {
         <div className="absolute inset-0 opacity-30 soft-grid" aria-hidden />
         <div className="relative mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-end px-6 pb-16 pt-28 md:pb-24">
           <p className="reveal text-sm uppercase tracking-[0.28em] text-champagne/90">
-            UGC · Lincoln, NH
+            UGC · New York City
           </p>
           <h1 className="reveal-delay mt-4 max-w-4xl font-[family-name:var(--font-display)] text-5xl leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">
             <span className="brand-sheen">kaylathecreateher</span>
           </h1>
           <p className="reveal-delay-2 mt-6 max-w-xl text-base text-pearl/85 md:text-lg">
-            Soft, on-camera beauty storytelling for hair, wellness, and lifestyle brands —
-            how-tos, unboxings, demos, and reviews that follow the brief and feel like a
-            friend recommending a favorite.
+            Celebrating natural hair in all its glory — beauty, wellness, lifestyle, and
+            fashion content that helps you feel your most confident self.
           </p>
           <div className="reveal-delay-2 mt-8 flex flex-wrap gap-3">
             <a
@@ -65,7 +64,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl">
           <p className="text-sm uppercase tracking-[0.22em] text-rose">The work</p>
           <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-4xl text-ink md:text-5xl">
-            Built for briefs that need beauty, clarity, and care.
+            Content that celebrates unique beauty — every hair type and texture.
           </h2>
           <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {portfolio.map((item, i) => (
@@ -90,21 +89,21 @@ export default async function HomePage() {
       <section id="offer" className="relative overflow-hidden bg-mist px-6 py-20 md:py-28">
         <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <p className="text-sm uppercase tracking-[0.22em] text-berry">What brands get</p>
+            <p className="text-sm uppercase tracking-[0.22em] text-berry">About Kayla</p>
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl md:text-5xl">
-              A creator who treats campaign guidelines like a craft.
+              A journey of self-expression and exploration.
             </h2>
             <p className="mt-5 max-w-xl text-ink/70">
-              Kayla specializes in hair, beauty, wellness, and fashion content across TikTok,
-              Instagram, YouTube Shorts, and Amazon — typically turning projects around in
-              about four days.
+              I&apos;m Kayla — a passionate creative content creator based in New York City.
+              My world revolves around the beauty of hair, the art of beauty, the significance
+              of wellness, the magic of lifestyle, and the ever-evolving trends of fashion.
             </p>
             <ul className="mt-8 space-y-4 text-sm text-ink/80">
               {[
-                "How-to videos, unboxings, product demos, and reviews",
-                "On-camera + selfie-style product storytelling",
-                "Guideline-first QC before every delivery",
-                "Usage-ready cuts for organic social and Amazon",
+                "Curating content that celebrates natural hair in all its glory",
+                "Inspiring every hair type and texture to embrace unique beauty",
+                "Skincare as self-care — tips, tricks, and beauty trends that build confidence",
+                "Lifestyle rooted in balance, fitness, and wellness — plus fashion that evolves",
               ].map((item) => (
                 <li key={item} className="flex gap-3">
                   <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-rose" />
@@ -157,7 +156,7 @@ export default async function HomePage() {
           <p className="font-[family-name:var(--font-display)] text-xl text-ink">
             kaylathecreateher
           </p>
-          <p>Beauty · Hair · Wellness · Lifestyle · Fashion</p>
+          <p>New York City · Hair · Beauty · Wellness · Lifestyle · Fashion</p>
         </div>
       </footer>
     </main>
