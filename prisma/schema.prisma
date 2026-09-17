@@ -170,6 +170,7 @@ model SiteContent {
   heroEyebrow    String   @default("UGC · New York City · English & Spanish")
   heroHeadline   String   @default("kaylathecreateher")
   heroTagline    String   @default("Celebrating natural hair in all its glory — beauty, wellness, lifestyle, and fashion content that helps you feel your most confident self.")
+  heroImageUrl   String   @default("/kayla-hero.jpg")
   workEyebrow    String   @default("The work")
   workHeadline   String   @default("Reels from @kaylathecreateher — hair, beauty, and lifestyle in motion.")
   aboutEyebrow   String   @default("About me")

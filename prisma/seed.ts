@@ -308,6 +308,7 @@ async function main() {
     data: {
       id: "singleton",
       heroEyebrow: "UGC · New York City · English & Spanish",
+      heroImageUrl: "/kayla-hero.jpg",
       workHeadline:
         "Reels from @kaylathecreateher — hair, beauty, and lifestyle in motion.",
       aboutEyebrow: "About me",

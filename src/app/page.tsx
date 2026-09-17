@@ -51,7 +51,7 @@ export default async function HomePage() {
     <main className="overflow-x-hidden">
       <section className="relative min-h-[100svh] overflow-hidden text-pearl">
         <Image
-          src="/kayla-hero.jpg"
+          src={site.heroImageUrl || "/kayla-hero.jpg"}
           alt="Kayla — kaylathecreateher, natural hair and beauty creator in New York City"
           fill
           priority

@@ -21,6 +21,7 @@ async function loadSite() {
       create: {
         id: "singleton",
         heroEyebrow: DEFAULT_SITE.heroEyebrow,
+        heroImageUrl: DEFAULT_SITE.heroImageUrl,
         aboutEyebrow: DEFAULT_SITE.aboutEyebrow,
         aboutHeadline: DEFAULT_SITE.aboutHeadline,
         aboutBody: DEFAULT_SITE.aboutBody,
@@ -59,7 +60,7 @@ export default async function SiteCmsPage() {
       <StudioPageHeader
         eyebrow="Public site"
         title="Edit homepage"
-        description="Update hero copy, Instagram reels in Work, social links, about/rates, and hire text — changes go live on the public site."
+        description="Visual WYSIWYG editor — click text to edit, upload hero and reel images, then save to publish."
       />
       <SiteEditor initialSite={site} initialItems={items} />
     </div>
