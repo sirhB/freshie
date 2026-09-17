@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hasDatabaseUrl } from "@/lib/db-url";
 import { prisma } from "@/lib/prisma";
 import { FALLBACK_PORTFOLIO } from "@/lib/portfolio";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -7,6 +8,11 @@ import { InquiryForm } from "@/components/InquiryForm";
 export const dynamic = "force-dynamic";
 
 async function getPortfolio() {
+  if (!hasDatabaseUrl()) {
+    console.warn("[home] no DB_URL configured — using fallback portfolio");
+    return FALLBACK_PORTFOLIO;
+  }
+
   try {
     const items = await prisma.portfolioItem.findMany({
       orderBy: { sortOrder: "asc" },

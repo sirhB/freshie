@@ -2,15 +2,16 @@ import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
 export default auth((req) => {
-  const isStudio = req.nextUrl.pathname.startsWith("/studio");
+  const path = req.nextUrl.pathname;
+  const isStudio = path === "/studio" || path.startsWith("/studio/");
   if (isStudio && !req.auth) {
     const url = new URL("/login", req.nextUrl.origin);
-    url.searchParams.set("callbackUrl", req.nextUrl.pathname);
+    url.searchParams.set("callbackUrl", path);
     return NextResponse.redirect(url);
   }
   return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/studio/:path*"],
+  matcher: ["/studio", "/studio/:path*"],
 };

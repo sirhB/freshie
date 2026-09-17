@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -15,19 +14,42 @@ export function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const form = new FormData(e.currentTarget);
-    const res = await signIn("credentials", {
-      email: form.get("email"),
-      password: form.get("password"),
-      redirect: false,
-    });
-    setLoading(false);
-    if (res?.error) {
-      setError("Those credentials don’t match the studio.");
-      return;
+
+    try {
+      const form = new FormData(e.currentTarget);
+      const email = String(form.get("email") || "");
+      const password = String(form.get("password") || "");
+
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl: params.get("callbackUrl") || "/studio",
+      });
+
+      if (!res) {
+        setError("Login got no response. Check AUTH_SECRET and DB_URL on Vercel.");
+        return;
+      }
+
+      if (res.error) {
+        if (res.error === "Configuration") {
+          setError("Auth is misconfigured — set AUTH_SECRET in Vercel env.");
+        } else {
+          setError("Those credentials don’t match the studio.");
+        }
+        return;
+      }
+
+      const next = params.get("callbackUrl") || "/studio";
+      router.push(next);
+      router.refresh();
+    } catch (err) {
+      console.error("[login]", err);
+      setError("Could not reach the auth service. Reload and try again.");
+    } finally {
+      setLoading(false);
     }
-    router.push(params.get("callbackUrl") || "/studio");
-    router.refresh();
   }
 
   return (
@@ -38,6 +60,7 @@ export function LoginForm() {
           name="email"
           type="email"
           required
+          autoComplete="username"
           defaultValue="kayla@kaylathecreateher.com"
           className="w-full rounded-2xl border border-ink/10 bg-white/80 px-4 py-3 outline-none ring-rose/30 focus:ring-2"
         />
@@ -48,11 +71,16 @@ export function LoginForm() {
           name="password"
           type="password"
           required
+          autoComplete="current-password"
           defaultValue="createher2026"
           className="w-full rounded-2xl border border-ink/10 bg-white/80 px-4 py-3 outline-none ring-rose/30 focus:ring-2"
         />
       </label>
-      {error && <p className="text-sm text-rose">{error}</p>}
+      {error && (
+        <p className="rounded-xl bg-rose/10 px-3 py-2 text-sm text-berry" role="alert">
+          {error}
+        </p>
+      )}
       <button
         type="submit"
         disabled={loading}
@@ -61,27 +89,5 @@ export function LoginForm() {
         {loading ? "Opening studio..." : "Enter studio"}
       </button>
     </form>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <main className="studio-shell flex min-h-[100svh] items-center justify-center px-6 py-16">
-      <div className="w-full max-w-md">
-        <Link href="/" className="font-[family-name:var(--font-display)] text-2xl text-berry">
-          kaylathecreateher
-        </Link>
-        <h1 className="mt-8 font-[family-name:var(--font-display)] text-4xl text-ink">
-          Studio login
-        </h1>
-        <p className="mt-2 text-sm text-ink/65">
-          Private workspace for brand obligations, briefs, and delivery.
-        </p>
-        <LoginForm />
-        <p className="mt-6 text-xs text-ink/50">
-          Demo: kayla@kaylathecreateher.com / createher2026
-        </p>
-      </div>
-    </main>
   );
 }
