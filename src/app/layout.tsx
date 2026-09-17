@@ -16,9 +16,9 @@ const body = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "kaylathecreateher | UGC for beauty, hair & wellness brands",
+  title: "kaylathecreateher | Natural hair, beauty & lifestyle UGC · NYC",
   description:
-    "Authentic how-tos, unboxings, demos, and reviews for TikTok, Instagram, YouTube Shorts, and Amazon — plus a private studio for brand obligations.",
+    "Kayla is a NYC creative celebrating natural hair, beauty as self-care, wellness, lifestyle, and fashion — UGC for TikTok, Instagram, YouTube Shorts, and Amazon.",
 };
 
 export default function RootLayout({
