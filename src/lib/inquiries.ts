@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { publishInquiryEvent } from "@/lib/inquiry-bus";
+import { createNotification } from "@/lib/notifications";
 
 export type CreateInquiryInput = {
   brandName: string;
@@ -58,6 +59,20 @@ export async function createInquiry(input: CreateInquiryInput) {
     `Inquiry received via ${inquiry.source}`,
     { source: inquiry.source },
   );
+
+  if (ownerId) {
+    try {
+      await createNotification({
+        userId: ownerId,
+        type: "inquiry",
+        title: `New inquiry · ${inquiry.brandName}`,
+        body: `${inquiry.contactName} via ${inquiry.source}${inquiry.budget ? ` · ${inquiry.budget}` : ""}`,
+        href: "/studio/inquiries",
+      });
+    } catch (error) {
+      console.error("[inquiries] notification failed", error);
+    }
+  }
 
   publishInquiryEvent("inquiry.created", inquiry.id);
   return inquiry;

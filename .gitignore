@@ -54,3 +54,7 @@ next-env.d.ts
 skills-lock.json
 
 /src/generated/prisma
+
+# local studio uploads (keep folder via .gitkeep)
+/public/uploads/*
+!/public/uploads/.gitkeep

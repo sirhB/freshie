@@ -37,7 +37,7 @@ export default async function HomePage() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-[center_20%] md:object-[72%_18%]"
+          className="hero-portrait object-cover object-[center_20%] md:object-[72%_18%]"
         />
         <div
           className="absolute inset-0 bg-gradient-to-r from-violet/95 via-violet/55 to-violet/20 md:via-violet/40 md:to-transparent"
@@ -47,6 +47,7 @@ export default async function HomePage() {
           className="absolute inset-0 bg-gradient-to-t from-ink/85 via-transparent to-violet/40"
           aria-hidden
         />
+        <div className="hero-grain absolute inset-0 opacity-[0.18]" aria-hidden />
         <SiteHeader />
         <div className="relative mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-end px-6 pb-16 pt-28 md:justify-center md:pb-24">
           <div className="max-w-xl md:max-w-lg">
@@ -76,25 +77,29 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
+        <div className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 md:block" aria-hidden>
+          <span className="scroll-cue block h-8 w-px bg-gradient-to-b from-pearl/0 via-pearl/70 to-pearl/0" />
+        </div>
       </section>
 
-      <section id="work" className="bg-pearl px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-6xl">
+      <section id="work" className="relative bg-pearl px-6 py-20 md:py-28">
+        <div className="soft-grid pointer-events-none absolute inset-0 opacity-40" aria-hidden />
+        <div className="relative mx-auto max-w-6xl">
           <p className="text-sm uppercase tracking-[0.22em] text-rose">The work</p>
           <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-4xl text-ink md:text-5xl">
             Content that celebrates unique beauty — every hair type and texture.
           </h2>
-          <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
             {portfolio.map((item, i) => (
               <article
                 key={item.id}
-                className="group border-t border-ink/10 pt-5 transition"
-                style={{ animationDelay: `${i * 60}ms` }}
+                className="group border-t border-berry/15 pt-5 transition duration-300 hover:border-rose/50"
+                style={{ animationDelay: `${i * 70}ms` }}
               >
                 <p className="text-xs uppercase tracking-[0.18em] text-rose">
                   {item.category} · {item.platform}
                 </p>
-                <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl text-ink">
+                <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl text-ink transition group-hover:text-berry">
                   {item.title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink/65">{item.description}</p>
@@ -104,8 +109,16 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="offer" className="relative overflow-hidden bg-mist px-6 py-20 md:py-28">
-        <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+      <section id="offer" className="relative overflow-hidden px-6 py-20 md:py-28">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-mist via-blush/40 to-lilac/30"
+          aria-hidden
+        />
+        <div
+          className="absolute -right-24 top-10 h-72 w-72 rounded-full bg-rose/20 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative mx-auto grid max-w-6xl gap-14 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
           <div>
             <p className="text-sm uppercase tracking-[0.22em] text-berry">About Kayla</p>
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl md:text-5xl">
@@ -124,20 +137,20 @@ export default async function HomePage() {
                 "Lifestyle rooted in balance, fitness, and wellness — plus fashion that evolves",
               ].map((item) => (
                 <li key={item} className="flex gap-3">
-                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-rose" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-berry" />
                   {item}
                 </li>
               ))}
             </ul>
           </div>
-          <div className="self-end rounded-[2rem] bg-berry px-8 py-10 text-pearl">
+          <div className="rate-panel rounded-[2rem] bg-violet px-8 py-10 text-pearl shadow-[0_24px_60px_-28px_rgba(74,37,112,0.55)]">
             <p className="text-sm uppercase tracking-[0.2em] text-champagne">Starting rates</p>
             <div className="mt-6 space-y-5">
               <Rate row="UGC video" value="$60–$100" />
               <Rate row="Sponsored post" value="$100" />
               <Rate row="UGC images" value="$15+" />
             </div>
-            <p className="mt-8 text-sm text-pearl/75">
+            <p className="mt-8 text-sm leading-relaxed text-pearl/75">
               Brands she has worked with include BioSchwartz, Thinbi, Dr. Arthritis, MPG,
               Unlockt, and Simply Nature&apos;s Pledge.
             </p>
@@ -145,8 +158,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="hire" className="bg-pearl px-6 py-20 md:py-28">
-        <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2">
+      <section id="hire" className="relative bg-pearl px-6 py-20 md:py-28">
+        <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2 lg:items-start">
           <div>
             <p className="text-sm uppercase tracking-[0.22em] text-rose">Collaborate</p>
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl md:text-5xl">
@@ -156,6 +169,10 @@ export default async function HomePage() {
               Public inquiries land directly in Kayla&apos;s private portal — deadlines,
               deliverables, product tracking, guideline checklists, and payments in one place.
             </p>
+            <div className="mt-8 flex flex-wrap gap-x-8 gap-y-2 text-sm text-ink/55">
+              <span>TikTok · Instagram · YouTube · Amazon</span>
+              <span>NYC-based · natural hair first</span>
+            </div>
             <Link
               href="/login"
               className="mt-8 inline-flex text-sm font-semibold text-berry underline-offset-4 hover:underline"
@@ -163,18 +180,31 @@ export default async function HomePage() {
               Creator studio login →
             </Link>
           </div>
-          <div className="rounded-[2rem] border border-ink/8 bg-white/60 p-6 md:p-8">
+          <div className="rounded-[2rem] border border-berry/15 bg-gradient-to-b from-white/90 to-mist/80 p-6 md:p-8">
             <InquiryForm />
           </div>
         </div>
       </section>
 
-      <footer className="border-t border-ink/8 px-6 py-10 text-sm text-ink/55">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <p className="font-[family-name:var(--font-display)] text-xl text-ink">
-            kaylathecreateher
-          </p>
-          <p>New York City · Hair · Beauty · Wellness · Lifestyle · Fashion</p>
+      <footer className="border-t border-berry/10 bg-mist/40 px-6 py-12 text-sm text-ink/55">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="font-[family-name:var(--font-display)] text-2xl text-berry">
+              kaylathecreateher
+            </p>
+            <p className="mt-1">New York City · Hair · Beauty · Wellness · Lifestyle · Fashion</p>
+          </div>
+          <div className="flex flex-wrap gap-5">
+            <a href="#work" className="hover:text-berry">
+              Work
+            </a>
+            <a href="#hire" className="hover:text-berry">
+              Hire
+            </a>
+            <Link href="/login" className="hover:text-berry">
+              Studio
+            </Link>
+          </div>
         </div>
       </footer>
     </main>

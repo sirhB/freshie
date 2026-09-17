@@ -6,8 +6,10 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.checklistItem.deleteMany();
+  await prisma.attachment.deleteMany().catch(() => undefined);
   await prisma.deliverable.deleteMany();
   await prisma.deal.deleteMany();
+  await prisma.notification.deleteMany().catch(() => undefined);
   // InquiryEvent may not exist until newer migrations are applied
   try {
     await prisma.inquiryEvent.deleteMany();
@@ -233,6 +235,16 @@ async function main() {
       { title: "Amazon product demo", category: "Demo", description: "Clean surface demo built for conversion", platform: "Amazon", featured: true, sortOrder: 4 },
       { title: "Selfie product stills", category: "Images", description: "On-camera product detail set", platform: "UGC Images", featured: false, sortOrder: 5 },
     ],
+  });
+
+  await prisma.notification.create({
+    data: {
+      userId: kayla.id,
+      type: "inquiry",
+      title: "New inquiry · Glow Ritual Co.",
+      body: "Ava Chen via web · $80–$120",
+      href: "/studio/inquiries",
+    },
   });
 
   console.log("Seeded Kayla portal. Login: kayla@kaylathecreateher.com / createher2026");
