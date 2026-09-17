@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --pearl: #fff7f4;
-  --blush: #f3d6d0;
-  --rose: #c97b86;
-  --berry: #7a3344;
-  --ink: #24161c;
-  --champagne: #d8b896;
-  --mist: #efe4df;
+  /* From Kayla's Vivett studio photo — lavender gown + violet set */
+  --pearl: #faf6fc;
+  --blush: #e9d5f2;
+  --rose: #b07bc9;
+  --berry: #6b3a8c;
+  --ink: #1e1428;
+  --champagne: #c9bdd8;
+  --mist: #f1e8f7;
+  --violet: #4a2570;
+  --lilac: #d4b8e8;
   --success: #3f6b58;
   --warning: #a56a2d;
   --background: var(--pearl);
@@ -24,6 +27,8 @@
   --color-ink: var(--ink);
   --color-champagne: var(--champagne);
   --color-mist: var(--mist);
+  --color-violet: var(--violet);
+  --color-lilac: var(--lilac);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --font-display: var(--font-display);
@@ -45,20 +50,20 @@ body {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--rose) 35%, white);
+  background: color-mix(in oklab, var(--rose) 40%, white);
 }
 
 .hero-wash {
   background:
-    radial-gradient(ellipse 80% 60% at 70% 20%, rgba(201, 123, 134, 0.35), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 15% 80%, rgba(216, 184, 150, 0.28), transparent 50%),
-    linear-gradient(160deg, #2a141c 0%, #5a2b38 42%, #8d4e5c 100%);
+    radial-gradient(ellipse 80% 60% at 70% 20%, rgba(176, 123, 201, 0.4), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 15% 80%, rgba(201, 189, 216, 0.28), transparent 50%),
+    linear-gradient(160deg, #1e1428 0%, #4a2570 42%, #6b3a8c 100%);
 }
 
 .soft-grid {
   background-image:
-    linear-gradient(rgba(36, 22, 28, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(36, 22, 28, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(30, 20, 40, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 20, 40, 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
@@ -95,7 +100,14 @@ body {
 }
 
 .brand-sheen {
-  background: linear-gradient(110deg, #fff7f4 20%, #f3d6d0 40%, #d8b896 60%, #fff7f4 80%);
+  background: linear-gradient(
+    110deg,
+    #faf6fc 15%,
+    #e9d5f2 35%,
+    #d4b8e8 50%,
+    #c9bdd8 65%,
+    #faf6fc 85%
+  );
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -117,6 +129,6 @@ body {
 
 .studio-shell {
   background:
-    radial-gradient(circle at top right, rgba(201, 123, 134, 0.12), transparent 40%),
-    linear-gradient(180deg, #fffaf8 0%, #f7ebe7 100%);
+    radial-gradient(circle at top right, rgba(176, 123, 201, 0.16), transparent 42%),
+    linear-gradient(180deg, #fbf7fd 0%, #f1e8f7 100%);
 }
