@@ -51,7 +51,7 @@ export const DEFAULT_SITE: SiteContentShape = {
   aboutBullets: [
     "How-tos, unboxings, product demos & reviews for TikTok, Instagram, YouTube Shorts & Amazon",
     "On-camera storytelling — plus selfie product stills when the brief calls for it",
-    "Partnered with BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt & Simply Nature's Pledge",
+    "Partnered with Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji & Loma Lux",
     "Based in New York City · English & Spanish · typical delivery about 4 days",
   ],
   ratesEyebrow: "Starting rates",
@@ -61,7 +61,7 @@ export const DEFAULT_SITE: SiteContentShape = {
     { label: "UGC images", value: "$15+" },
   ],
   ratesNote:
-    "Brands she has worked with include BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt, and Simply Nature's Pledge. Campaigns typically deliver in about 4 days.",
+    "Brands she has worked with include Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji, Loma Lux, BioSchwartz, Thinbi, and Dr. Arthritis. Campaigns typically deliver in about 4 days.",
   hireEyebrow: "Collaborate",
   hireHeadline: "Send a brief. She'll manage the obligations in studio.",
   hireBody:
