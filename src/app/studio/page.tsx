@@ -11,7 +11,7 @@ export default async function StudioHome() {
 
   const [deals, inquiries, deliverables] = await Promise.all([
     prisma.deal.findMany({
-      where: { ownerId: userId, status: { in: ["active", "negotiating", "delivered"] } },
+      where: { ownerId: userId, status: { in: ["active", "negotiating"] } },
       include: { brand: true, deliverables: true, checklistItems: true },
       orderBy: { dueDate: "asc" },
     }),
