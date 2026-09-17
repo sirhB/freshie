@@ -19,6 +19,7 @@ async function main() {
   await prisma.inquiry.deleteMany();
   await prisma.brand.deleteMany();
   await prisma.portfolioItem.deleteMany();
+  await prisma.siteContent.deleteMany().catch(() => undefined);
   await prisma.user.deleteMany();
 
   const passwordHash = await hash("createher2026", 10);
@@ -228,13 +229,120 @@ async function main() {
 
   await prisma.portfolioItem.createMany({
     data: [
-      { title: "Silk press how-to", category: "Hair", description: "Step-by-step heat protect + finish routine", platform: "TikTok", featured: true, sortOrder: 0 },
-      { title: "Serum unboxing", category: "Beauty", description: "First impressions with soft natural light", platform: "Instagram", featured: true, sortOrder: 1 },
-      { title: "Morning wellness stack", category: "Wellness", description: "Calm lifestyle review for supplements", platform: "YouTube Shorts", featured: true, sortOrder: 2 },
-      { title: "Outfit texture reel", category: "Fashion", description: "Movement-led apparel storytelling", platform: "Instagram", featured: false, sortOrder: 3 },
-      { title: "Amazon product demo", category: "Demo", description: "Clean surface demo built for conversion", platform: "Amazon", featured: true, sortOrder: 4 },
-      { title: "Selfie product stills", category: "Images", description: "On-camera product detail set", platform: "UGC Images", featured: false, sortOrder: 5 },
+      {
+        title: "Lifeway Kefir 40 years",
+        category: "Lifestyle",
+        description: "Celebrating 40 years with Lifeway Kefir in NYC",
+        platform: "Instagram",
+        mediaUrl: "https://www.instagram.com/reel/DZ71HwQx5sY/",
+        thumbnailUrl: "/reels/lifeway-kefir.jpg",
+        kind: "reel",
+        featured: true,
+        published: true,
+        sortOrder: 0,
+      },
+      {
+        title: "Maybelline lip combo",
+        category: "Beauty",
+        description: "Maybelline Super Stay peel-off lip combo",
+        platform: "Instagram",
+        mediaUrl: "https://www.instagram.com/reel/DdRd1DkxpUY/",
+        thumbnailUrl: "/reels/maybelline-lip.jpg",
+        kind: "reel",
+        featured: true,
+        published: true,
+        sortOrder: 1,
+      },
+      {
+        title: "Mini braids on natural hair",
+        category: "Hair",
+        description: "Mini braids styling on natural hair",
+        platform: "Instagram",
+        mediaUrl: "https://www.instagram.com/reel/Dc-IV8NxDJo/",
+        thumbnailUrl: "/reels/mini-braids.jpg",
+        kind: "reel",
+        featured: true,
+        published: true,
+        sortOrder: 2,
+      },
+      {
+        title: "OLAPLEX braid-out shine",
+        category: "Hair",
+        description: "OLAPLEX N°7 Bonding Oil on a braid-out",
+        platform: "Instagram",
+        mediaUrl: "https://www.instagram.com/reel/Dby9Zc1RwTW/",
+        thumbnailUrl: "/reels/olaplex-braidout.jpg",
+        kind: "reel",
+        featured: true,
+        published: true,
+        sortOrder: 3,
+      },
+      {
+        title: "OLAPLEX × Poppi duo",
+        category: "Hair",
+        description: "ICONIC duo — OLAPLEX and Poppi shake, spritz, shine",
+        platform: "Instagram",
+        mediaUrl: "https://www.instagram.com/reel/DbtONb6x0b3/",
+        thumbnailUrl: "/reels/olaplex-poppi.jpg",
+        kind: "reel",
+        featured: true,
+        published: true,
+        sortOrder: 4,
+      },
+      {
+        title: "Wash day with OLAPLEX",
+        category: "Hair",
+        description: "Wash day with N°4 Curl Shampoo & N°5 Curl Conditioner",
+        platform: "Instagram",
+        mediaUrl: "https://www.instagram.com/reel/DaoWN4vRecs/",
+        thumbnailUrl: "/reels/olaplex-washday.jpg",
+        kind: "reel",
+        featured: true,
+        published: true,
+        sortOrder: 5,
+      },
     ],
+  });
+
+  await prisma.siteContent.create({
+    data: {
+      id: "singleton",
+      workHeadline:
+        "Reels from @kaylathecreateher — hair, beauty, and lifestyle in motion.",
+      aboutBullets: JSON.stringify([
+        "Curating content that celebrates natural hair in all its glory",
+        "Inspiring every hair type and texture to embrace unique beauty",
+        "Skincare as self-care — tips, tricks, and beauty trends that build confidence",
+        "Lifestyle rooted in balance, fitness, and wellness — plus fashion that evolves",
+      ]),
+      ratesJson: JSON.stringify([
+        { label: "UGC video", value: "$60–$100" },
+        { label: "Sponsored post", value: "$100" },
+        { label: "UGC images", value: "$15+" },
+      ]),
+      socialsJson: JSON.stringify([
+        {
+          platform: "Instagram",
+          label: "@kaylathecreateher",
+          url: "https://www.instagram.com/kaylathecreateher/",
+        },
+        {
+          platform: "Threads",
+          label: "@kaylathecreateher",
+          url: "https://www.threads.net/@kaylathecreateher",
+        },
+        {
+          platform: "Email",
+          label: "kaylarcollab@gmail.com",
+          url: "mailto:kaylarcollab@gmail.com",
+        },
+        {
+          platform: "Assistant",
+          label: "Speak with my assistant",
+          url: "https://chat.linka.ai/liveagent/rickalia",
+        },
+      ]),
+    },
   });
 
   await prisma.notification.create({
