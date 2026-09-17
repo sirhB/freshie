@@ -9,13 +9,19 @@ async function ensureSite() {
   return prisma.siteContent.upsert({
     where: { id: "singleton" },
     update: {},
-    create: {
-      id: "singleton",
-      aboutBullets: JSON.stringify(DEFAULT_SITE.aboutBullets),
-      ratesJson: JSON.stringify(DEFAULT_SITE.rates),
-      socialsJson: JSON.stringify(DEFAULT_SITE.socials),
-      workHeadline: DEFAULT_SITE.workHeadline,
-    },
+      create: {
+        id: "singleton",
+        heroEyebrow: DEFAULT_SITE.heroEyebrow,
+        aboutEyebrow: DEFAULT_SITE.aboutEyebrow,
+        aboutHeadline: DEFAULT_SITE.aboutHeadline,
+        aboutBody: DEFAULT_SITE.aboutBody,
+        aboutBullets: JSON.stringify(DEFAULT_SITE.aboutBullets),
+        ratesJson: JSON.stringify(DEFAULT_SITE.rates),
+        ratesNote: DEFAULT_SITE.ratesNote,
+        socialsJson: JSON.stringify(DEFAULT_SITE.socials),
+        workHeadline: DEFAULT_SITE.workHeadline,
+        footerLine: DEFAULT_SITE.footerLine,
+      },
   });
 }
 

@@ -307,24 +307,36 @@ async function main() {
   await prisma.siteContent.create({
     data: {
       id: "singleton",
+      heroEyebrow: "UGC · New York City · English & Spanish",
       workHeadline:
         "Reels from @kaylathecreateher — hair, beauty, and lifestyle in motion.",
+      aboutEyebrow: "About me",
+      aboutHeadline: "A journey of self-expression and exploration.",
+      aboutBody:
+        "I'm Kayla (Rickalia N.) — a passionate creative content creator based in New York City. My world revolves around the beauty of hair, the art of beauty, the significance of wellness, the magic of lifestyle, and the ever-evolving trends of fashion. I create and speak on camera in English and Spanish.",
       aboutBullets: JSON.stringify([
-        "Curating content that celebrates natural hair in all its glory",
-        "Inspiring every hair type and texture to embrace unique beauty",
-        "Skincare as self-care — tips, tricks, and beauty trends that build confidence",
-        "Lifestyle rooted in balance, fitness, and wellness — plus fashion that evolves",
+        "How-tos, unboxings, product demos & reviews for TikTok, Instagram, YouTube Shorts & Amazon",
+        "On-camera storytelling — plus selfie product stills when the brief calls for it",
+        "Partnered with BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt & Simply Nature's Pledge",
+        "Based in New York City · English & Spanish · typical delivery about 4 days",
       ]),
       ratesJson: JSON.stringify([
         { label: "UGC video", value: "$60–$100" },
         { label: "Sponsored post", value: "$100" },
         { label: "UGC images", value: "$15+" },
       ]),
+      ratesNote:
+        "Brands she has worked with include BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt, and Simply Nature's Pledge. Campaigns typically deliver in about 4 days.",
       socialsJson: JSON.stringify([
         {
           platform: "Instagram",
           label: "@kaylathecreateher",
           url: "https://www.instagram.com/kaylathecreateher/",
+        },
+        {
+          platform: "YouTube",
+          label: "@kaylathecreateher",
+          url: "https://www.youtube.com/@kaylathecreateher",
         },
         {
           platform: "Threads",
@@ -342,6 +354,8 @@ async function main() {
           url: "https://chat.linka.ai/liveagent/rickalia",
         },
       ]),
+      footerLine:
+        "New York City · English & Spanish · Hair · Beauty · Wellness · Lifestyle · Fashion",
     },
   });
 
