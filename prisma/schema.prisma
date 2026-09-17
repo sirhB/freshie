@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("owner")
+  createdAt    DateTime @default(now())
+  deals        Deal[]
+  inquiries    Inquiry[]
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String
+  niche     String?
+  website   String?
+  contactEmail String?
+  notes     String?
+  createdAt DateTime @default(now())
+  deals     Deal[]
+}
+
+model Deal {
+  id              String   @id @default(cuid())
+  title           String
+  status          String   @default("inquiry") // inquiry, negotiating, active, delivered, paid, archived
+  platform        String   // TikTok, Instagram, YouTube, Amazon, Multi
+  contentType     String   // How-To, Unboxing, Product Review, Demo, UGC Images
+  rateCents       Int      @default(0)
+  currency        String   @default("USD")
+  dueDate         DateTime?
+  usageRightsDays Int?
+  briefSummary    String?
+  guidelines      String?
+  talkingPoints   String?
+  productShipped  Boolean  @default(false)
+  productReceived Boolean  @default(false)
+  trackingNumber  String?
+  paymentStatus   String   @default("unpaid") // unpaid, invoiced, paid, overdue
+  paidAt          DateTime?
+  brandId         String
+  brand           Brand    @relation(fields: [brandId], references: [id])
+  ownerId         String
+  owner           User     @relation(fields: [ownerId], references: [id])
+  deliverables    Deliverable[]
+  checklistItems  ChecklistItem[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Deliverable {
+  id          String   @id @default(cuid())
+  dealId      String
+  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  title       String
+  format      String   // video, image, caption, story
+  status      String   @default("todo") // todo, filming, editing, review, revisions, delivered, live
+  dueDate     DateTime?
+  deliveredAt DateTime?
+  liveUrl     String?
+  notes       String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model ChecklistItem {
+  id        String   @id @default(cuid())
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  label     String
+  done      Boolean  @default(false)
+  sortOrder Int      @default(0)
+}
+
+model Inquiry {
+  id          String   @id @default(cuid())
+  brandName   String
+  contactName String
+  email       String
+  budget      String?
+  platforms   String?
+  message     String
+  status      String   @default("new") // new, reviewed, replied, archived
+  ownerId     String?
+  owner       User?    @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model PortfolioItem {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  description String?
+  platform    String
+  featured    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+}
