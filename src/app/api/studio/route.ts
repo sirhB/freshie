@@ -99,11 +99,10 @@ export async function PATCH(req: Request) {
 
   if (type === "inquiry") {
     const data = z.object({ id: z.string(), status: z.string() }).parse(body);
-    await prisma.inquiry.update({
-      where: { id: data.id },
-      data: { status: data.status },
-    });
+    const { setInquiryStatus } = await import("@/lib/inquiries");
+    await setInquiryStatus(data.id, data.status);
     revalidatePath("/studio/inquiries");
+    revalidatePath("/studio");
     return NextResponse.json({ ok: true });
   }
 

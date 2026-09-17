@@ -1,14 +1,25 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { FALLBACK_PORTFOLIO } from "@/lib/portfolio";
 import { SiteHeader } from "@/components/SiteHeader";
 import { InquiryForm } from "@/components/InquiryForm";
 
 export const dynamic = "force-dynamic";
 
+async function getPortfolio() {
+  try {
+    const items = await prisma.portfolioItem.findMany({
+      orderBy: { sortOrder: "asc" },
+    });
+    return items.length > 0 ? items : FALLBACK_PORTFOLIO;
+  } catch (error) {
+    console.error("[home] portfolio query failed; using fallback", error);
+    return FALLBACK_PORTFOLIO;
+  }
+}
+
 export default async function HomePage() {
-  const portfolio = await prisma.portfolioItem.findMany({
-    orderBy: { sortOrder: "asc" },
-  });
+  const portfolio = await getPortfolio();
 
   return (
     <main className="overflow-x-hidden">
