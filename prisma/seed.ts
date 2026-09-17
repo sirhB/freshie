@@ -7,6 +7,12 @@ async function main() {
   await prisma.checklistItem.deleteMany();
   await prisma.deliverable.deleteMany();
   await prisma.deal.deleteMany();
+  // InquiryEvent may not exist until newer migrations are applied
+  try {
+    await prisma.inquiryEvent.deleteMany();
+  } catch {
+    /* ignore */
+  }
   await prisma.inquiry.deleteMany();
   await prisma.brand.deleteMany();
   await prisma.portfolioItem.deleteMany();
@@ -172,7 +178,7 @@ async function main() {
     },
   });
 
-  await prisma.inquiry.create({
+  const webInquiry = await prisma.inquiry.create({
     data: {
       brandName: "Glow Ritual Co.",
       contactName: "Maya Chen",
@@ -181,7 +187,39 @@ async function main() {
       platforms: "TikTok, Instagram",
       message: "Looking for soft glam skincare UGC with authentic get-ready-with-me energy.",
       status: "new",
+      source: "web",
       ownerId: kayla.id,
+      events: {
+        create: [
+          { type: "created", message: "Inquiry received via web" },
+        ],
+      },
+    },
+  });
+
+  await prisma.inquiry.create({
+    data: {
+      brandName: "Soft Silk Labs",
+      contactName: "Instagram a1b2c3",
+      email: "ig.demo_softsilk@instagram.local",
+      platforms: "Instagram DM",
+      message:
+        "Hi Kayla! We loved your hair content. Can you create a soft glam leave-in mist Reel for us?",
+      status: "reviewed",
+      source: "instagram",
+      igSenderId: "ig_softsilk_demo",
+      externalThreadId: "seed_ig_1",
+      autoRepliedAt: new Date(),
+      ownerId: kayla.id,
+      events: {
+        create: [
+          { type: "created", message: "Inquiry received via instagram" },
+          {
+            type: "auto_replied",
+            message: "Auto-reply sent via Instagram Messaging API",
+          },
+        ],
+      },
     },
   });
 
@@ -198,6 +236,7 @@ async function main() {
 
   console.log("Seeded Kayla portal. Login: kayla@kaylathecreateher.com / createher2026");
   console.log("Active deal id:", activeDeal.id);
+  console.log("Sample web inquiry:", webInquiry.id);
 }
 
 main()

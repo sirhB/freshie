@@ -82,17 +82,40 @@ model ChecklistItem {
 }
 
 model Inquiry {
-  id          String   @id @default(cuid())
-  brandName   String
-  contactName String
-  email       String
-  budget      String?
-  platforms   String?
-  message     String
-  status      String   @default("new") // new, reviewed, replied, archived
-  ownerId     String?
-  owner       User?    @relation(fields: [ownerId], references: [id])
-  createdAt   DateTime @default(now())
+  id               String   @id @default(cuid())
+  brandName        String
+  contactName      String
+  email            String
+  budget           String?
+  platforms        String?
+  message          String
+  status           String   @default("new") // new, reviewed, replied, converted, archived
+  source           String   @default("web") // web, instagram, demo
+  igSenderId       String?
+  externalThreadId String?
+  autoRepliedAt    DateTime?
+  convertedDealId  String?
+  ownerId          String?
+  owner            User?    @relation(fields: [ownerId], references: [id])
+  events           InquiryEvent[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status])
+  @@index([source])
+  @@index([igSenderId])
+}
+
+model InquiryEvent {
+  id        String   @id @default(cuid())
+  inquiryId String
+  inquiry   Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  type      String   // created, status_changed, auto_replied, converted, note
+  message   String
+  meta      String?  // JSON blob for optional metadata
+  createdAt DateTime @default(now())
+
+  @@index([inquiryId])
 }
 
 model PortfolioItem {
