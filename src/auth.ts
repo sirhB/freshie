@@ -1,11 +1,17 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { compare } from "bcryptjs";
+import { compare, hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+
+const DEMO_EMAIL = "kayla@kaylathecreateher.com";
+const DEMO_PASSWORD = "createher2026";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  secret:
+    process.env.AUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    "kayla-createher-dev-secret-set-AUTH_SECRET-in-vercel",
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
@@ -23,7 +29,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!email || !password) return null;
 
         try {
-          const user = await prisma.user.findUnique({ where: { email } });
+          let user = await prisma.user.findUnique({ where: { email } });
+
+          // Bootstrap demo owner on a fresh database (first deploy / empty seed).
+          if (!user && email === DEMO_EMAIL && password === DEMO_PASSWORD) {
+            const count = await prisma.user.count();
+            if (count === 0) {
+              user = await prisma.user.create({
+                data: {
+                  email: DEMO_EMAIL,
+                  name: "Kayla",
+                  passwordHash: await hash(DEMO_PASSWORD, 10),
+                  role: "owner",
+                },
+              });
+            }
+          }
+
           if (!user) return null;
 
           const valid = await compare(password, user.passwordHash);
