@@ -12,6 +12,7 @@ async function ensureSite() {
       create: {
         id: "singleton",
         heroEyebrow: DEFAULT_SITE.heroEyebrow,
+        heroImageUrl: DEFAULT_SITE.heroImageUrl,
         aboutEyebrow: DEFAULT_SITE.aboutEyebrow,
         aboutHeadline: DEFAULT_SITE.aboutHeadline,
         aboutBody: DEFAULT_SITE.aboutBody,
@@ -39,6 +40,7 @@ const siteSchema = z.object({
   heroEyebrow: z.string().min(1),
   heroHeadline: z.string().min(1),
   heroTagline: z.string().min(1),
+  heroImageUrl: z.string().min(1),
   workEyebrow: z.string().min(1),
   workHeadline: z.string().min(1),
   aboutEyebrow: z.string().min(1),
@@ -74,6 +76,7 @@ export async function PUT(req: Request) {
         heroEyebrow: data.heroEyebrow,
         heroHeadline: data.heroHeadline,
         heroTagline: data.heroTagline,
+        heroImageUrl: data.heroImageUrl,
         workEyebrow: data.workEyebrow,
         workHeadline: data.workHeadline,
         aboutEyebrow: data.aboutEyebrow,

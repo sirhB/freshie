@@ -5,6 +5,7 @@ export type SiteContentShape = {
   heroEyebrow: string;
   heroHeadline: string;
   heroTagline: string;
+  heroImageUrl: string;
   workEyebrow: string;
   workHeadline: string;
   aboutEyebrow: string;
@@ -42,6 +43,7 @@ export const DEFAULT_SITE: SiteContentShape = {
   heroHeadline: "kaylathecreateher",
   heroTagline:
     "Celebrating natural hair in all its glory — beauty, wellness, lifestyle, and fashion content that helps you feel your most confident self.",
+  heroImageUrl: "/kayla-hero.jpg",
   workEyebrow: "The work",
   workHeadline: "Reels from @kaylathecreateher — hair, beauty, and lifestyle in motion.",
   aboutEyebrow: "About me",
@@ -192,6 +194,7 @@ export function serializeSiteContent(row: {
   heroEyebrow: string;
   heroHeadline: string;
   heroTagline: string;
+  heroImageUrl?: string | null;
   workEyebrow: string;
   workHeadline: string;
   aboutEyebrow: string;
@@ -213,6 +216,7 @@ export function serializeSiteContent(row: {
     heroEyebrow: row.heroEyebrow,
     heroHeadline: row.heroHeadline,
     heroTagline: row.heroTagline,
+    heroImageUrl: row.heroImageUrl || DEFAULT_SITE.heroImageUrl,
     workEyebrow: row.workEyebrow,
     workHeadline: row.workHeadline,
     aboutEyebrow: row.aboutEyebrow,
