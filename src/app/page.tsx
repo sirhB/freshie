@@ -2,20 +2,39 @@ import Image from "next/image";
 import Link from "next/link";
 import { hasDatabaseUrl } from "@/lib/db-url";
 import { prisma } from "@/lib/prisma";
-import { FALLBACK_PORTFOLIO } from "@/lib/portfolio";
+import {
+  DEFAULT_SITE,
+  FALLBACK_PORTFOLIO,
+  serializeSiteContent,
+  type PortfolioShape,
+  type SiteContentShape,
+} from "@/lib/site-content";
 import { SiteHeader } from "@/components/SiteHeader";
 import { InquiryForm } from "@/components/InquiryForm";
+import { WorkReelGrid } from "@/components/WorkReelGrid";
+import { SocialLinksSection } from "@/components/SocialLinksSection";
 
 export const dynamic = "force-dynamic";
 
-async function getPortfolio() {
+async function getSite(): Promise<SiteContentShape> {
+  if (!hasDatabaseUrl()) return DEFAULT_SITE;
+  try {
+    const row = await prisma.siteContent.findUnique({ where: { id: "singleton" } });
+    return row ? serializeSiteContent(row) : DEFAULT_SITE;
+  } catch (error) {
+    console.error("[home] site content failed", error);
+    return DEFAULT_SITE;
+  }
+}
+
+async function getPortfolio(): Promise<PortfolioShape[]> {
   if (!hasDatabaseUrl()) {
-    console.warn("[home] no DB_URL configured — using fallback portfolio");
     return FALLBACK_PORTFOLIO;
   }
 
   try {
     const items = await prisma.portfolioItem.findMany({
+      where: { published: true },
       orderBy: { sortOrder: "asc" },
     });
     return items.length > 0 ? items : FALLBACK_PORTFOLIO;
@@ -26,7 +45,7 @@ async function getPortfolio() {
 }
 
 export default async function HomePage() {
-  const portfolio = await getPortfolio();
+  const [site, portfolio] = await Promise.all([getSite(), getPortfolio()]);
 
   return (
     <main className="overflow-x-hidden">
@@ -52,14 +71,13 @@ export default async function HomePage() {
         <div className="relative mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-end px-6 pb-16 pt-28 md:justify-center md:pb-24">
           <div className="max-w-xl md:max-w-lg">
             <p className="reveal text-sm uppercase tracking-[0.28em] text-champagne/90">
-              UGC · New York City
+              {site.heroEyebrow}
             </p>
             <h1 className="reveal-delay mt-4 font-[family-name:var(--font-display)] text-5xl leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">
-              <span className="brand-sheen">kaylathecreateher</span>
+              <span className="brand-sheen">{site.heroHeadline}</span>
             </h1>
             <p className="reveal-delay-2 mt-6 text-base text-pearl/90 md:text-lg">
-              Celebrating natural hair in all its glory — beauty, wellness, lifestyle, and
-              fashion content that helps you feel your most confident self.
+              {site.heroTagline}
             </p>
             <div className="reveal-delay-2 mt-8 flex flex-wrap gap-3">
               <a
@@ -72,7 +90,7 @@ export default async function HomePage() {
                 href="#work"
                 className="rounded-full border border-pearl/35 px-6 py-3 text-sm text-pearl transition hover:bg-pearl/10"
               >
-                View content styles
+                Watch reels
               </a>
             </div>
           </div>
@@ -85,29 +103,30 @@ export default async function HomePage() {
       <section id="work" className="relative bg-pearl px-6 py-20 md:py-28">
         <div className="soft-grid pointer-events-none absolute inset-0 opacity-40" aria-hidden />
         <div className="relative mx-auto max-w-6xl">
-          <p className="text-sm uppercase tracking-[0.22em] text-rose">The work</p>
+          <p className="text-sm uppercase tracking-[0.22em] text-rose">{site.workEyebrow}</p>
           <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-4xl text-ink md:text-5xl">
-            Content that celebrates unique beauty — every hair type and texture.
+            {site.workHeadline}
           </h2>
-          <div className="mt-12 grid gap-x-10 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
-            {portfolio.map((item, i) => (
-              <article
-                key={item.id}
-                className="group border-t border-berry/15 pt-5 transition duration-300 hover:border-rose/50"
-                style={{ animationDelay: `${i * 70}ms` }}
-              >
-                <p className="text-xs uppercase tracking-[0.18em] text-rose">
-                  {item.category} · {item.platform}
-                </p>
-                <h3 className="mt-3 font-[family-name:var(--font-display)] text-2xl text-ink transition group-hover:text-berry">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink/65">{item.description}</p>
-              </article>
-            ))}
-          </div>
+          <WorkReelGrid items={portfolio} />
+          <p className="mt-8 text-sm text-ink/50">
+            More on{" "}
+            <a
+              href="https://www.instagram.com/kaylathecreateher/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-berry hover:underline"
+            >
+              Instagram @kaylathecreateher
+            </a>
+          </p>
         </div>
       </section>
+
+      <SocialLinksSection
+        eyebrow={site.socialEyebrow}
+        headline={site.socialHeadline}
+        socials={site.socials}
+      />
 
       <section id="offer" className="relative overflow-hidden px-6 py-20 md:py-28">
         <div
@@ -120,22 +139,13 @@ export default async function HomePage() {
         />
         <div className="relative mx-auto grid max-w-6xl gap-14 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
           <div>
-            <p className="text-sm uppercase tracking-[0.22em] text-berry">About Kayla</p>
+            <p className="text-sm uppercase tracking-[0.22em] text-berry">{site.aboutEyebrow}</p>
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl md:text-5xl">
-              A journey of self-expression and exploration.
+              {site.aboutHeadline}
             </h2>
-            <p className="mt-5 max-w-xl text-ink/70">
-              I&apos;m Kayla — a passionate creative content creator based in New York City.
-              My world revolves around the beauty of hair, the art of beauty, the significance
-              of wellness, the magic of lifestyle, and the ever-evolving trends of fashion.
-            </p>
+            <p className="mt-5 max-w-xl text-ink/70">{site.aboutBody}</p>
             <ul className="mt-8 space-y-4 text-sm text-ink/80">
-              {[
-                "Curating content that celebrates natural hair in all its glory",
-                "Inspiring every hair type and texture to embrace unique beauty",
-                "Skincare as self-care — tips, tricks, and beauty trends that build confidence",
-                "Lifestyle rooted in balance, fitness, and wellness — plus fashion that evolves",
-              ].map((item) => (
+              {site.aboutBullets.map((item) => (
                 <li key={item} className="flex gap-3">
                   <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-berry" />
                   {item}
@@ -144,16 +154,13 @@ export default async function HomePage() {
             </ul>
           </div>
           <div className="rate-panel rounded-[2rem] bg-violet px-8 py-10 text-pearl shadow-[0_24px_60px_-28px_rgba(74,37,112,0.55)]">
-            <p className="text-sm uppercase tracking-[0.2em] text-champagne">Starting rates</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-champagne">{site.ratesEyebrow}</p>
             <div className="mt-6 space-y-5">
-              <Rate row="UGC video" value="$60–$100" />
-              <Rate row="Sponsored post" value="$100" />
-              <Rate row="UGC images" value="$15+" />
+              {site.rates.map((rate) => (
+                <Rate key={rate.label} row={rate.label} value={rate.value} />
+              ))}
             </div>
-            <p className="mt-8 text-sm leading-relaxed text-pearl/75">
-              Brands she has worked with include BioSchwartz, Thinbi, Dr. Arthritis, MPG,
-              Unlockt, and Simply Nature&apos;s Pledge.
-            </p>
+            <p className="mt-8 text-sm leading-relaxed text-pearl/75">{site.ratesNote}</p>
           </div>
         </div>
       </section>
@@ -161,14 +168,11 @@ export default async function HomePage() {
       <section id="hire" className="relative bg-pearl px-6 py-20 md:py-28">
         <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2 lg:items-start">
           <div>
-            <p className="text-sm uppercase tracking-[0.22em] text-rose">Collaborate</p>
+            <p className="text-sm uppercase tracking-[0.22em] text-rose">{site.hireEyebrow}</p>
             <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl md:text-5xl">
-              Send a brief. She&apos;ll manage the obligations in studio.
+              {site.hireHeadline}
             </h2>
-            <p className="mt-5 text-ink/70">
-              Public inquiries land directly in Kayla&apos;s private portal — deadlines,
-              deliverables, product tracking, guideline checklists, and payments in one place.
-            </p>
+            <p className="mt-5 text-ink/70">{site.hireBody}</p>
             <div className="mt-8 flex flex-wrap gap-x-8 gap-y-2 text-sm text-ink/55">
               <span>TikTok · Instagram · YouTube · Amazon</span>
               <span>NYC-based · natural hair first</span>
@@ -190,13 +194,16 @@ export default async function HomePage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="font-[family-name:var(--font-display)] text-2xl text-berry">
-              kaylathecreateher
+              {site.heroHeadline}
             </p>
-            <p className="mt-1">New York City · Hair · Beauty · Wellness · Lifestyle · Fashion</p>
+            <p className="mt-1">{site.footerLine}</p>
           </div>
           <div className="flex flex-wrap gap-5">
             <a href="#work" className="hover:text-berry">
               Work
+            </a>
+            <a href="#socials" className="hover:text-berry">
+              Socials
             </a>
             <a href="#hire" className="hover:text-berry">
               Hire
