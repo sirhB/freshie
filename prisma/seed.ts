@@ -35,6 +35,13 @@ async function main() {
 
   const brands = await Promise.all(
     [
+      { name: "Maybelline", niche: "Beauty", contactEmail: "creators@maybelline.com" },
+      { name: "OLAPLEX", niche: "Haircare", contactEmail: "creators@olaplex.com" },
+      { name: "Ulta Beauty", niche: "Beauty Retail", contactEmail: "partnerships@ulta.com" },
+      { name: "Lifeway", niche: "Food & Beverage", contactEmail: "influencer@lifeway.net" },
+      { name: "Poppi", niche: "Food & Beverage", contactEmail: "creators@drinkpoppi.com" },
+      { name: "TPH by Taraji", niche: "Haircare", contactEmail: "collabs@tphbytaraji.com" },
+      { name: "Loma Lux", niche: "Skincare", contactEmail: "hello@lomalux.com" },
       { name: "BioSchwartz", niche: "Health & Supplements", contactEmail: "collabs@bioschwartz.com" },
       { name: "Thinbi", niche: "Beauty & Wellness", contactEmail: "partners@thinbi.com" },
       { name: "Dr. Arthritis", niche: "Health", contactEmail: "ugc@drarthritis.com" },
@@ -44,7 +51,11 @@ async function main() {
     ].map((b) => prisma.brand.create({ data: b })),
   );
 
-  const [bio, thinbi, arthritis, simply, mpg] = brands;
+  const bio = brands.find((b) => b.name === "BioSchwartz")!;
+  const thinbi = brands.find((b) => b.name === "Thinbi")!;
+  const arthritis = brands.find((b) => b.name === "Dr. Arthritis")!;
+  const simply = brands.find((b) => b.name === "Simply Nature's Pledge")!;
+  const mpg = brands.find((b) => b.name === "MPG")!;
 
   const activeDeal = await prisma.deal.create({
     data: {
@@ -317,7 +328,7 @@ async function main() {
       aboutBullets: JSON.stringify([
         "How-tos, unboxings, product demos & reviews for TikTok, Instagram, YouTube Shorts & Amazon",
         "On-camera storytelling — plus selfie product stills when the brief calls for it",
-        "Partnered with BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt & Simply Nature's Pledge",
+        "Partnered with Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji & Loma Lux",
         "Based in New York City · English & Spanish · typical delivery about 4 days",
       ]),
       ratesJson: JSON.stringify([
@@ -326,7 +337,7 @@ async function main() {
         { label: "UGC images", value: "$15+" },
       ]),
       ratesNote:
-        "Brands she has worked with include BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt, and Simply Nature's Pledge. Campaigns typically deliver in about 4 days.",
+        "Brands she has worked with include Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji, Loma Lux, BioSchwartz, Thinbi, and Dr. Arthritis. Campaigns typically deliver in about 4 days.",
       socialsJson: JSON.stringify([
         {
           platform: "Instagram",
