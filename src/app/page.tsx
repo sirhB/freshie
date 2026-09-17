@@ -144,6 +144,12 @@ export default async function HomePage() {
               {site.aboutHeadline}
             </h2>
             <p className="mt-5 max-w-xl text-ink/70">{site.aboutBody}</p>
+            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs uppercase tracking-[0.16em] text-berry/80">
+              <span>New York City</span>
+              <span>English &amp; Spanish</span>
+              <span>On camera</span>
+              <span>~4 day delivery</span>
+            </div>
             <ul className="mt-8 space-y-4 text-sm text-ink/80">
               {site.aboutBullets.map((item) => (
                 <li key={item} className="flex gap-3">
@@ -175,7 +181,7 @@ export default async function HomePage() {
             <p className="mt-5 text-ink/70">{site.hireBody}</p>
             <div className="mt-8 flex flex-wrap gap-x-8 gap-y-2 text-sm text-ink/55">
               <span>TikTok · Instagram · YouTube · Amazon</span>
-              <span>NYC-based · natural hair first</span>
+              <span>NYC-based · English &amp; Spanish</span>
             </div>
             <Link
               href="/login"

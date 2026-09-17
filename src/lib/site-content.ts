@@ -38,21 +38,21 @@ export type PortfolioShape = {
 };
 
 export const DEFAULT_SITE: SiteContentShape = {
-  heroEyebrow: "UGC · New York City",
+  heroEyebrow: "UGC · New York City · English & Spanish",
   heroHeadline: "kaylathecreateher",
   heroTagline:
     "Celebrating natural hair in all its glory — beauty, wellness, lifestyle, and fashion content that helps you feel your most confident self.",
   workEyebrow: "The work",
   workHeadline: "Reels from @kaylathecreateher — hair, beauty, and lifestyle in motion.",
-  aboutEyebrow: "About Kayla",
+  aboutEyebrow: "About me",
   aboutHeadline: "A journey of self-expression and exploration.",
   aboutBody:
-    "I'm Kayla — a passionate creative content creator based in New York City. My world revolves around the beauty of hair, the art of beauty, the significance of wellness, the magic of lifestyle, and the ever-evolving trends of fashion.",
+    "I'm Kayla (Rickalia N.) — a passionate creative content creator based in New York City. My world revolves around the beauty of hair, the art of beauty, the significance of wellness, the magic of lifestyle, and the ever-evolving trends of fashion. I create and speak on camera in English and Spanish.",
   aboutBullets: [
-    "Curating content that celebrates natural hair in all its glory",
-    "Inspiring every hair type and texture to embrace unique beauty",
-    "Skincare as self-care — tips, tricks, and beauty trends that build confidence",
-    "Lifestyle rooted in balance, fitness, and wellness — plus fashion that evolves",
+    "How-tos, unboxings, product demos & reviews for TikTok, Instagram, YouTube Shorts & Amazon",
+    "On-camera storytelling — plus selfie product stills when the brief calls for it",
+    "Partnered with BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt & Simply Nature's Pledge",
+    "Based in New York City · English & Spanish · typical delivery about 4 days",
   ],
   ratesEyebrow: "Starting rates",
   rates: [
@@ -61,7 +61,7 @@ export const DEFAULT_SITE: SiteContentShape = {
     { label: "UGC images", value: "$15+" },
   ],
   ratesNote:
-    "Brands she has worked with include BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt, and Simply Nature's Pledge.",
+    "Brands she has worked with include BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt, and Simply Nature's Pledge. Campaigns typically deliver in about 4 days.",
   hireEyebrow: "Collaborate",
   hireHeadline: "Send a brief. She'll manage the obligations in studio.",
   hireBody:
@@ -73,6 +73,11 @@ export const DEFAULT_SITE: SiteContentShape = {
       platform: "Instagram",
       label: "@kaylathecreateher",
       url: "https://www.instagram.com/kaylathecreateher/",
+    },
+    {
+      platform: "YouTube",
+      label: "@kaylathecreateher",
+      url: "https://www.youtube.com/@kaylathecreateher",
     },
     {
       platform: "Threads",
@@ -90,7 +95,7 @@ export const DEFAULT_SITE: SiteContentShape = {
       url: "https://chat.linka.ai/liveagent/rickalia",
     },
   ],
-  footerLine: "New York City · Hair · Beauty · Wellness · Lifestyle · Fashion",
+  footerLine: "New York City · English & Spanish · Hair · Beauty · Wellness · Lifestyle · Fashion",
 };
 
 export const FALLBACK_PORTFOLIO: PortfolioShape[] = [

@@ -21,7 +21,7 @@ export function SocialLinksSection({
         <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-4xl md:text-5xl">
           {headline}
         </h2>
-        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {socials.map((s) => (
             <li key={`${s.platform}-${s.url}`}>
               <a
@@ -33,7 +33,7 @@ export function SocialLinksSection({
                 <span className="text-xs uppercase tracking-[0.18em] text-champagne/90">
                   {s.platform}
                 </span>
-                <span className="mt-3 font-[family-name:var(--font-display)] text-2xl">
+                <span className="mt-3 font-[family-name:var(--font-display)] text-xl md:text-2xl">
                   {s.label}
                 </span>
               </a>
