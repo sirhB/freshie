@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SKIP_DB_MIGRATE: "1"
-      DB_DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
-      DB_DATABASE_URL_UNPOOLED: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
+      DB_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
       AUTH_SECRET: ci-auth-secret-not-for-production
       NEXTAUTH_URL: http://localhost:3000
     steps:

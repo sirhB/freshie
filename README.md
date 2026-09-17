@@ -13,7 +13,7 @@ Public media-kit site + private brand-obligations studio for UGC creator **kayla
 
 ```bash
 npm install
-# Set DB_DATABASE_URL + DB_DATABASE_URL_UNPOOLED (see .env.example)
+# Set DB_URL (see .env.example)
 npx prisma migrate deploy
 npm run db:seed
 npm run dev
@@ -28,17 +28,18 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Vercel database (`DB_` prefix)
 
-This app expects the Vercel storage prefix **`DB_`**:
+This app expects the Vercel storage prefix **`DB_`**, so the connection string is:
 
-| Prisma / app env | Typical Vercel-prefixed aliases (auto-mapped) |
+| Prisma / app env | Typical aliases (auto-mapped) |
 |---|---|
-| `DB_DATABASE_URL` | `DB_POSTGRES_PRISMA_URL`, `DB_POSTGRES_URL` |
-| `DB_DATABASE_URL_UNPOOLED` | `DB_POSTGRES_URL_NON_POOLING` |
+| `DB_URL` | `DB_POSTGRES_PRISMA_URL`, `DB_POSTGRES_URL`, `DATABASE_URL` |
 
 Also set on Vercel:
 
-- `AUTH_SECRET` (required)
+- `AUTH_SECRET` (required for login)
 - `NEXTAUTH_URL` = `https://kaylathecreateher.vercel.app`
+
+The public homepage will still render with fallback portfolio content if the DB URL is missing; studio/auth need a working Postgres URL.
 
 Build runs `prisma migrate deploy` automatically when a DB URL is present.
 

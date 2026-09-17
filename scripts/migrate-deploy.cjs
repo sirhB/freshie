@@ -30,26 +30,17 @@ function loadEnvFile() {
 
 function ensureDatabaseUrl() {
   const pooled =
-    process.env.DB_DATABASE_URL ||
+    process.env.DB_URL ||
     process.env.DB_POSTGRES_PRISMA_URL ||
     process.env.DB_POSTGRES_URL ||
+    process.env.DB_DATABASE_URL ||
     process.env.DATABASE_URL ||
     process.env.POSTGRES_PRISMA_URL ||
     process.env.POSTGRES_URL;
 
-  const direct =
-    process.env.DB_DATABASE_URL_UNPOOLED ||
-    process.env.DB_POSTGRES_URL_NON_POOLING ||
-    process.env.DATABASE_URL_UNPOOLED ||
-    process.env.POSTGRES_URL_NON_POOLING ||
-    pooled;
-
   if (pooled) {
-    process.env.DB_DATABASE_URL = pooled;
+    process.env.DB_URL = pooled;
     process.env.DATABASE_URL = pooled;
-  }
-  if (direct) {
-    process.env.DB_DATABASE_URL_UNPOOLED = direct;
   }
   return Boolean(pooled);
 }
@@ -62,9 +53,7 @@ if (process.env.SKIP_DB_MIGRATE === "1") {
 }
 
 if (!ensureDatabaseUrl()) {
-  console.warn(
-    "[db] No DB_DATABASE_URL / DATABASE_URL found — skipping prisma migrate deploy",
-  );
+  console.warn("[db] No DB_URL found — skipping prisma migrate deploy");
   process.exit(0);
 }
 
@@ -76,7 +65,7 @@ const result = spawnSync("npx", ["prisma", "migrate", "deploy"], {
 const status = result.status ?? 1;
 if (status !== 0 && process.env.VERCEL !== "1") {
   console.warn(
-    "[db] prisma migrate deploy failed locally/CI — continuing build (set Vercel DB_* for production migrations)",
+    "[db] prisma migrate deploy failed locally/CI — continuing build (set Vercel DB_URL for production migrations)",
   );
   process.exit(0);
 }
