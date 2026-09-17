@@ -8,6 +8,7 @@ import {
   DealControls,
   DeliverableStatusSelect,
 } from "@/components/StudioActions";
+import { UploadPanel } from "@/components/studio/UploadPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,11 @@ export default async function DealDetailPage({
   });
 
   if (!deal) notFound();
+
+  const attachments = await prisma.attachment.findMany({
+    where: { dealId: deal.id },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <div className="space-y-8">
@@ -85,6 +91,10 @@ export default async function DealDetailPage({
               )}
             </div>
           )}
+
+          <div className="rounded-2xl border border-ink/8 bg-white/70 p-5">
+            <UploadPanel dealId={deal.id} attachments={attachments} />
+          </div>
         </section>
 
         <section className="space-y-6">

@@ -132,3 +132,45 @@ body {
     radial-gradient(circle at top right, rgba(176, 123, 201, 0.16), transparent 42%),
     linear-gradient(180deg, #fbf7fd 0%, #f1e8f7 100%);
 }
+
+.hero-grain {
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(250, 246, 252, 0.08), transparent 35%),
+    radial-gradient(circle at 80% 70%, rgba(212, 184, 232, 0.12), transparent 40%);
+  mix-blend-mode: soft-light;
+}
+
+.hero-portrait {
+  animation: portrait-settle 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes portrait-settle {
+  from {
+    transform: scale(1.06);
+    filter: saturate(0.9);
+  }
+  to {
+    transform: scale(1);
+    filter: saturate(1);
+  }
+}
+
+.scroll-cue {
+  animation: cue-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes cue-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scaleY(0.7);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scaleY(1);
+  }
+}
+
+.rate-panel {
+  animation: rise 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}

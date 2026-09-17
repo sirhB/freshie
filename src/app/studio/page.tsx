@@ -2,6 +2,11 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { daysUntil, formatDate, formatMoney, statusLabel } from "@/lib/format";
+import {
+  EmptyState,
+  StatTile,
+  StudioPageHeader,
+} from "@/components/studio/StudioUI";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +14,7 @@ export default async function StudioHome() {
   const session = await auth();
   const userId = session!.user!.id;
 
-  const [deals, inquiries, deliverables] = await Promise.all([
+  const [deals, inquiries, deliverables, unreadAlerts] = await Promise.all([
     prisma.deal.findMany({
       where: { ownerId: userId, status: { in: ["active", "negotiating"] } },
       include: { brand: true, deliverables: true, checklistItems: true },
@@ -25,6 +30,7 @@ export default async function StudioHome() {
       orderBy: { dueDate: "asc" },
       take: 8,
     }),
+    prisma.notification.count({ where: { userId, readAt: null } }),
   ]);
 
   const dueSoon = deals.filter((d) => {
@@ -44,28 +50,42 @@ export default async function StudioHome() {
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-rose">Today</p>
-          <h1 className="font-[family-name:var(--font-display)] text-4xl text-ink md:text-5xl">
-            Hey Kayla — here&apos;s what needs you.
-          </h1>
-        </div>
-        <Link
-          href="/studio/deals/new"
-          className="rounded-full bg-berry px-5 py-2.5 text-sm font-semibold text-pearl hover:bg-ink"
-        >
-          New deal
-        </Link>
-      </div>
+      <StudioPageHeader
+        eyebrow="Today"
+        title="Hey Kayla — here's what needs you."
+        description={
+          unreadAlerts > 0
+            ? `${unreadAlerts} unread alert${unreadAlerts === 1 ? "" : "s"} waiting in notifications.`
+            : "Deadlines, production, and inbound briefs — one glance."
+        }
+        action={
+          <div className="flex flex-wrap gap-2">
+            {unreadAlerts > 0 && (
+              <Link
+                href="/studio/notifications"
+                className="rounded-full border border-berry/25 bg-blush/50 px-5 py-2.5 text-sm font-semibold text-berry hover:bg-blush"
+              >
+                View alerts
+              </Link>
+            )}
+            <Link
+              href="/studio/deals/new"
+              className="rounded-full bg-berry px-5 py-2.5 text-sm font-semibold text-pearl hover:bg-violet"
+            >
+              New deal
+            </Link>
+          </div>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Due in 5 days" value={String(dueSoon.length)} />
-        <Stat label="Open deliverables" value={String(deliverables.length)} />
-        <Stat label="New inquiries" value={String(inquiries)} />
-        <Stat
+        <StatTile label="Due in 5 days" value={String(dueSoon.length)} hint="Active obligations" />
+        <StatTile label="Open deliverables" value={String(deliverables.length)} hint="In production" />
+        <StatTile label="New inquiries" value={String(inquiries)} hint="Needs triage" />
+        <StatTile
           label="Outstanding pay"
           value={formatMoney(unpaid._sum.rateCents ?? 0)}
+          hint="Unpaid + invoiced"
         />
       </div>
 
@@ -89,10 +109,20 @@ export default async function StudioHome() {
 
       <section className="grid gap-8 lg:grid-cols-2">
         <div>
-          <h2 className="font-[family-name:var(--font-display)] text-2xl">Deadline radar</h2>
+          <div className="flex items-end justify-between gap-3">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl">Deadline radar</h2>
+            <Link href="/studio/calendar" className="text-xs font-semibold text-berry hover:underline">
+              Calendar →
+            </Link>
+          </div>
           <div className="mt-4 space-y-3">
             {deals.length === 0 && (
-              <p className="text-sm text-ink/55">No active obligations right now.</p>
+              <EmptyState
+                title="No active obligations"
+                body="When deals are negotiating or active, they'll show here with due dates."
+                href="/studio/deals/new"
+                cta="Add a deal"
+              />
             )}
             {deals.map((deal) => {
               const days = daysUntil(deal.dueDate);
@@ -118,7 +148,7 @@ export default async function StudioHome() {
                   <div className="mt-3 flex flex-wrap gap-3 text-xs text-ink/60">
                     <span>Due {formatDate(deal.dueDate)}</span>
                     {days !== null && (
-                      <span className={days <= 2 ? "text-rose font-semibold" : ""}>
+                      <span className={days <= 2 ? "font-semibold text-rose" : ""}>
                         {days < 0 ? `${Math.abs(days)}d overdue` : `${days}d left`}
                       </span>
                     )}
@@ -134,10 +164,20 @@ export default async function StudioHome() {
         </div>
 
         <div>
-          <h2 className="font-[family-name:var(--font-display)] text-2xl">
-            Production queue
-          </h2>
+          <div className="flex items-end justify-between gap-3">
+            <h2 className="font-[family-name:var(--font-display)] text-2xl">
+              Production queue
+            </h2>
+            <Link href="/studio/pipeline" className="text-xs font-semibold text-berry hover:underline">
+              Pipeline →
+            </Link>
+          </div>
           <div className="mt-4 space-y-3">
+            {deliverables.length === 0 && (
+              <p className="rounded-2xl border border-dashed border-berry/20 bg-white/40 px-4 py-8 text-center text-sm text-ink/50">
+                Nothing in production — drag deliverables on the pipeline board when you start.
+              </p>
+            )}
             {deliverables.map((item) => (
               <Link
                 key={item.id}
@@ -156,15 +196,6 @@ export default async function StudioHome() {
           </div>
         </div>
       </section>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-ink/8 bg-white/70 p-4">
-      <p className="text-xs uppercase tracking-[0.16em] text-ink/45">{label}</p>
-      <p className="mt-2 font-[family-name:var(--font-display)] text-3xl">{value}</p>
     </div>
   );
 }
