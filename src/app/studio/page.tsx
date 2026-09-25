@@ -60,6 +60,12 @@ export default async function StudioHome() {
         }
         action={
           <div className="flex flex-wrap gap-2">
+            <Link
+              href="/studio/getting-started"
+              className="rounded-full border border-berry/25 bg-white/70 px-5 py-2.5 text-sm font-semibold text-berry hover:bg-blush/50"
+            >
+              Getting started
+            </Link>
             {unreadAlerts > 0 && (
               <Link
                 href="/studio/notifications"

@@ -32,7 +32,13 @@ export function defaultAutoReplyText(siteUrl: string) {
 
 export function verifyMetaSignature(rawBody: string, signatureHeader: string | null) {
   const secret = process.env.INSTAGRAM_APP_SECRET;
+  const isProd =
+    process.env.VERCEL_ENV === "production" ||
+    (process.env.NODE_ENV === "production" && Boolean(process.env.VERCEL));
+
   if (!secret) {
+    // Production must never accept unsigned Meta webhooks.
+    if (isProd) return false;
     // Dev/demo without app secret: allow payloads (simulate + local webhook tests)
     return true;
   }

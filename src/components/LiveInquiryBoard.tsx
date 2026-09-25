@@ -55,6 +55,8 @@ export function LiveInquiryBoard({
   const [live, setLive] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replyFlash, setReplyFlash] = useState("");
   const [simulating, setSimulating] = useState(false);
 
   const refresh = useCallback(
@@ -72,6 +74,28 @@ export function LiveInquiryBoard({
     },
     [status, source],
   );
+
+  async function sendReply(id: string) {
+    const message = (replyDrafts[id] || "").trim();
+    if (!message) return;
+    setBusyId(id);
+    setReplyFlash("");
+    const res = await fetch("/api/instagram/reply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ inquiryId: id, message }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setBusyId(null);
+    if (!res.ok) {
+      setReplyFlash(data.error || "Reply failed");
+      return;
+    }
+    setReplyDrafts((prev) => ({ ...prev, [id]: "" }));
+    setReplyFlash(data.demo ? "Demo reply logged (Meta not connected)." : "Reply sent on Instagram.");
+    void refresh();
+    router.refresh();
+  }
 
   useEffect(() => {
     const es = new EventSource("/api/inquiries/stream");
@@ -214,6 +238,9 @@ export function LiveInquiryBoard({
       </div>
 
       <div className="space-y-4">
+        {replyFlash && (
+          <p className="rounded-full bg-blush/40 px-4 py-2 text-sm text-berry">{replyFlash}</p>
+        )}
         {inquiries.map((inq) => (
           <article key={inq.id} className="rounded-2xl border border-ink/8 bg-white/70 p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -266,6 +293,30 @@ export function LiveInquiryBoard({
               {inq.autoRepliedAt && <span>Auto-replied {formatWhen(inq.autoRepliedAt)}</span>}
               {inq.igSenderId && <span>IG sender: {inq.igSenderId}</span>}
             </div>
+
+            {inq.igSenderId && (
+              <div className="mt-4 space-y-2 border-t border-ink/8 pt-3">
+                <p className="text-xs uppercase tracking-[0.14em] text-rose">Reply on Instagram</p>
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    value={replyDrafts[inq.id] || ""}
+                    onChange={(e) =>
+                      setReplyDrafts((prev) => ({ ...prev, [inq.id]: e.target.value }))
+                    }
+                    placeholder="Thanks for reaching out — here's my availability…"
+                    className="min-w-[220px] flex-1 rounded-full border border-ink/10 bg-white px-3 py-1.5 text-sm"
+                  />
+                  <button
+                    type="button"
+                    disabled={busyId === inq.id || !(replyDrafts[inq.id] || "").trim()}
+                    onClick={() => sendReply(inq.id)}
+                    className="rounded-full border border-berry/30 bg-blush/40 px-3 py-1.5 text-xs font-semibold text-berry disabled:opacity-50"
+                  >
+                    Send reply
+                  </button>
+                </div>
+              </div>
+            )}
 
             {inq.events && inq.events.length > 0 && (
               <div className="mt-4 border-t border-ink/8 pt-3">

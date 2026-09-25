@@ -1,16 +1,23 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 import "../src/lib/db-url";
 
 const prisma = new PrismaClient();
 
-async function main() {
+/**
+ * Safe by default: upserts Kayla's user + site content, only seeds demo deals/inquiries
+ * when the database has no deals yet.
+ *
+ * Destructive full reset (local/dev only):
+ *   SEED_RESET=true npm run db:seed
+ */
+async function wipeAll() {
   await prisma.checklistItem.deleteMany();
   await prisma.attachment.deleteMany().catch(() => undefined);
   await prisma.deliverable.deleteMany();
   await prisma.deal.deleteMany();
   await prisma.notification.deleteMany().catch(() => undefined);
-  // InquiryEvent may not exist until newer migrations are applied
   try {
     await prisma.inquiryEvent.deleteMany();
   } catch {
@@ -21,30 +28,103 @@ async function main() {
   await prisma.portfolioItem.deleteMany();
   await prisma.siteContent.deleteMany().catch(() => undefined);
   await prisma.user.deleteMany();
+}
 
-  const passwordHash = await hash("createher2026", 10);
-
-  const kayla = await prisma.user.create({
-    data: {
+async function ensureKayla(passwordHash: string) {
+  return prisma.user.upsert({
+    where: { email: "kayla@kaylathecreateher.com" },
+    update: { name: "Kayla", role: "owner" },
+    create: {
       email: "kayla@kaylathecreateher.com",
       name: "Kayla",
       passwordHash,
       role: "owner",
     },
   });
+}
 
+async function ensureSiteContent() {
+  const aboutBullets = JSON.stringify([
+    "How-tos, unboxings, product demos & reviews for TikTok, Instagram, YouTube Shorts & Amazon",
+    "On-camera storytelling — plus selfie product stills when the brief calls for it",
+    "Partnered with Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji & Loma Lux",
+    "Based in New York City · English & Spanish · typical delivery about 4 days",
+  ]);
+  const ratesJson = JSON.stringify([
+    { label: "UGC video", value: "$60–$100" },
+    { label: "Sponsored post", value: "$100" },
+    { label: "UGC images", value: "$15+" },
+  ]);
+  const ratesNote =
+    "Brands she has worked with include Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji, Loma Lux, BioSchwartz, Thinbi, and Dr. Arthritis. Campaigns typically deliver in about 4 days.";
+  const socialsJson = JSON.stringify([
+    {
+      platform: "Instagram",
+      label: "@kaylathecreateher",
+      url: "https://www.instagram.com/kaylathecreateher/",
+    },
+    {
+      platform: "YouTube",
+      label: "@kaylathecreateher",
+      url: "https://www.youtube.com/@kaylathecreateher",
+    },
+    {
+      platform: "Threads",
+      label: "@kaylathecreateher",
+      url: "https://www.threads.net/@kaylathecreateher",
+    },
+    {
+      platform: "Email",
+      label: "kaylarcollab@gmail.com",
+      url: "mailto:kaylarcollab@gmail.com",
+    },
+    {
+      platform: "Assistant",
+      label: "Speak with my assistant",
+      url: "https://chat.linka.ai/liveagent/rickalia",
+    },
+  ]);
+
+  await prisma.siteContent.upsert({
+    where: { id: "singleton" },
+    update: {
+      aboutBullets,
+      ratesNote,
+      socialsJson,
+    },
+    create: {
+      id: "singleton",
+      heroEyebrow: "UGC · New York City · English & Spanish",
+      heroImageUrl: "/kayla-hero.jpg",
+      workHeadline:
+        "Reels from @kaylathecreateher — hair, beauty, and lifestyle in motion.",
+      aboutEyebrow: "About me",
+      aboutHeadline: "A journey of self-expression and exploration.",
+      aboutBody:
+        "I'm Kayla (Rickalia N.) — a passionate creative content creator based in New York City. My world revolves around the beauty of hair, the art of beauty, the significance of wellness, the magic of lifestyle, and the ever-evolving trends of fashion. I create and speak on camera in English and Spanish.",
+      aboutBullets,
+      ratesJson,
+      ratesNote,
+      socialsJson,
+      footerLine:
+        "New York City · English & Spanish · Hair · Beauty · Wellness · Lifestyle · Fashion",
+    },
+  });
+}
+
+async function seedDemoData(kaylaId: string) {
   const brands = await Promise.all(
     [
+      { name: "Maybelline", niche: "Beauty", contactEmail: "creators@maybelline.com" },
+      { name: "OLAPLEX", niche: "Hair", contactEmail: "partners@olaplex.com" },
+      { name: "Ulta Beauty", niche: "Beauty Retail", contactEmail: "ugc@ulta.com" },
+      { name: "Lifeway", niche: "Health & Wellness", contactEmail: "collabs@lifeway.net" },
       { name: "BioSchwartz", niche: "Health & Supplements", contactEmail: "collabs@bioschwartz.com" },
       { name: "Thinbi", niche: "Beauty & Wellness", contactEmail: "partners@thinbi.com" },
-      { name: "Dr. Arthritis", niche: "Health", contactEmail: "ugc@drarthritis.com" },
-      { name: "Simply Nature's Pledge", niche: "Household", contactEmail: "hello@simplynaturespledge.com" },
-      { name: "MPG", niche: "App", contactEmail: "creator@mpg.app" },
-      { name: "Unlockt", niche: "Lifestyle", contactEmail: "brand@unlockt.co" },
     ].map((b) => prisma.brand.create({ data: b })),
   );
 
-  const [bio, thinbi, arthritis, simply, mpg] = brands;
+  const [maybelline, olaplex, , , , thinbi] = brands;
 
   const activeDeal = await prisma.deal.create({
     data: {
@@ -64,11 +144,23 @@ async function main() {
       trackingNumber: "9400111899223344556677",
       paymentStatus: "invoiced",
       brandId: thinbi.id,
-      ownerId: kayla.id,
+      ownerId: kaylaId,
       deliverables: {
         create: [
-          { title: "TikTok How-To", format: "video", status: "editing", sortOrder: 0, dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2) },
-          { title: "IG Reel cutdown", format: "video", status: "filming", sortOrder: 1, dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3) },
+          {
+            title: "TikTok How-To",
+            format: "video",
+            status: "editing",
+            sortOrder: 0,
+            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
+          },
+          {
+            title: "IG Reel cutdown",
+            format: "video",
+            status: "filming",
+            sortOrder: 1,
+            dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
+          },
           { title: "Product flat-lay stills", format: "image", status: "todo", sortOrder: 2 },
         ],
       },
@@ -86,31 +178,22 @@ async function main() {
 
   await prisma.deal.create({
     data: {
-      title: "Joint support wellness review",
-      status: "active",
-      platform: "YouTube Shorts",
+      title: "Maybelline lip combo Reel",
+      status: "negotiating",
+      platform: "Instagram",
       contentType: "Product Review",
       rateCents: 10000,
-      dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 6),
-      usageRightsDays: 60,
-      briefSummary: "Honest lifestyle review woven into morning wellness routine.",
-      guidelines: "Disclose #ad. No disease claims. Keep authentic and calm.",
-      productShipped: true,
-      productReceived: false,
-      trackingNumber: "1Z999AA10123456784",
-      paymentStatus: "unpaid",
-      brandId: arthritis.id,
-      ownerId: kayla.id,
+      dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 10),
+      brandId: maybelline.id,
+      ownerId: kaylaId,
+      briefSummary: "Gifted Super Stay peel-off lip combo — soft glam demo.",
       deliverables: {
-        create: [
-          { title: "YouTube Short review", format: "video", status: "todo", sortOrder: 0 },
-        ],
+        create: [{ title: "IG Reel", format: "video", status: "todo", sortOrder: 0 }],
       },
       checklistItems: {
         create: [
-          { label: "Wait for product arrival", sortOrder: 0 },
-          { label: "Film morning routine context", sortOrder: 1 },
-          { label: "Add paid partnership disclosure", sortOrder: 2 },
+          { label: "Confirm talking points", sortOrder: 0 },
+          { label: "Film primary deliverable", sortOrder: 1 },
         ],
       },
     },
@@ -118,66 +201,20 @@ async function main() {
 
   await prisma.deal.create({
     data: {
-      title: "Supplement stack demo set",
-      status: "delivered",
-      platform: "Amazon",
-      contentType: "Product Demo",
-      rateCents: 6000,
-      dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4),
-      usageRightsDays: 365,
-      briefSummary: "Amazon-ready product demo with clean white surface.",
-      guidelines: "Amazon creative standards. No text overlays covering product.",
-      productShipped: true,
-      productReceived: true,
-      paymentStatus: "paid",
-      paidAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
-      brandId: bio.id,
-      ownerId: kayla.id,
-      deliverables: {
-        create: [
-          {
-            title: "Amazon demo video",
-            format: "video",
-            status: "live",
-            sortOrder: 0,
-            deliveredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
-            liveUrl: "https://www.amazon.com",
-          },
-        ],
-      },
-    },
-  });
-
-  await prisma.deal.create({
-    data: {
-      title: "Natural household unboxing",
-      status: "negotiating",
-      platform: "Instagram",
-      contentType: "Unboxing",
-      rateCents: 8000,
-      dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 12),
-      briefSummary: "Soft aesthetic unboxing for clean living audience.",
-      brandId: simply.id,
-      ownerId: kayla.id,
-      paymentStatus: "unpaid",
-    },
-  });
-
-  await prisma.deal.create({
-    data: {
-      title: "App walkthrough UGC",
-      status: "paid",
-      platform: "TikTok",
+      title: "OLAPLEX wash-day Shorts",
+      status: "active",
+      platform: "YouTube Shorts",
       contentType: "How-To",
-      rateCents: 10000,
-      paymentStatus: "paid",
-      paidAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20),
-      brandId: mpg.id,
-      ownerId: kayla.id,
+      rateCents: 8000,
+      dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 6),
+      brandId: olaplex.id,
+      ownerId: kaylaId,
+      paymentStatus: "unpaid",
       deliverables: {
-        create: [
-          { title: "TikTok walkthrough", format: "video", status: "live", sortOrder: 0 },
-        ],
+        create: [{ title: "Wash day Short", format: "video", status: "todo", sortOrder: 0 }],
+      },
+      checklistItems: {
+        create: [{ label: "Show N°4 + N°5 clearly", sortOrder: 0 }],
       },
     },
   });
@@ -185,18 +222,17 @@ async function main() {
   const webInquiry = await prisma.inquiry.create({
     data: {
       brandName: "Glow Ritual Co.",
-      contactName: "Maya Chen",
-      email: "maya@glowritual.co",
-      budget: "$80–$120 / video",
+      contactName: "Ava Chen",
+      email: "ava@glowritual.co",
+      budget: "$80–$120",
       platforms: "TikTok, Instagram",
-      message: "Looking for soft glam skincare UGC with authentic get-ready-with-me energy.",
+      message:
+        "Hi Kayla! We love your natural hair content and want a 20–30s UGC how-to for our leave-in mist. Product ships next week.",
       status: "new",
       source: "web",
-      ownerId: kayla.id,
+      ownerId: kaylaId,
       events: {
-        create: [
-          { type: "created", message: "Inquiry received via web" },
-        ],
+        create: [{ type: "created", message: "Inquiry received via web" }],
       },
     },
   });
@@ -214,7 +250,7 @@ async function main() {
       igSenderId: "ig_softsilk_demo",
       externalThreadId: "seed_ig_1",
       autoRepliedAt: new Date(),
-      ownerId: kayla.id,
+      ownerId: kaylaId,
       events: {
         create: [
           { type: "created", message: "Inquiry received via instagram" },
@@ -304,65 +340,9 @@ async function main() {
     ],
   });
 
-  await prisma.siteContent.create({
-    data: {
-      id: "singleton",
-      heroEyebrow: "UGC · New York City · English & Spanish",
-      heroImageUrl: "/kayla-hero.jpg",
-      workHeadline:
-        "Reels from @kaylathecreateher — hair, beauty, and lifestyle in motion.",
-      aboutEyebrow: "About me",
-      aboutHeadline: "A journey of self-expression and exploration.",
-      aboutBody:
-        "I'm Kayla (Rickalia N.) — a passionate creative content creator based in New York City. My world revolves around the beauty of hair, the art of beauty, the significance of wellness, the magic of lifestyle, and the ever-evolving trends of fashion. I create and speak on camera in English and Spanish.",
-      aboutBullets: JSON.stringify([
-        "How-tos, unboxings, product demos & reviews for TikTok, Instagram, YouTube Shorts & Amazon",
-        "On-camera storytelling — plus selfie product stills when the brief calls for it",
-        "Partnered with BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt & Simply Nature's Pledge",
-        "Based in New York City · English & Spanish · typical delivery about 4 days",
-      ]),
-      ratesJson: JSON.stringify([
-        { label: "UGC video", value: "$60–$100" },
-        { label: "Sponsored post", value: "$100" },
-        { label: "UGC images", value: "$15+" },
-      ]),
-      ratesNote:
-        "Brands she has worked with include BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt, and Simply Nature's Pledge. Campaigns typically deliver in about 4 days.",
-      socialsJson: JSON.stringify([
-        {
-          platform: "Instagram",
-          label: "@kaylathecreateher",
-          url: "https://www.instagram.com/kaylathecreateher/",
-        },
-        {
-          platform: "YouTube",
-          label: "@kaylathecreateher",
-          url: "https://www.youtube.com/@kaylathecreateher",
-        },
-        {
-          platform: "Threads",
-          label: "@kaylathecreateher",
-          url: "https://www.threads.net/@kaylathecreateher",
-        },
-        {
-          platform: "Email",
-          label: "kaylarcollab@gmail.com",
-          url: "mailto:kaylarcollab@gmail.com",
-        },
-        {
-          platform: "Assistant",
-          label: "Speak with my assistant",
-          url: "https://chat.linka.ai/liveagent/rickalia",
-        },
-      ]),
-      footerLine:
-        "New York City · English & Spanish · Hair · Beauty · Wellness · Lifestyle · Fashion",
-    },
-  });
-
   await prisma.notification.create({
     data: {
-      userId: kayla.id,
+      userId: kaylaId,
       type: "inquiry",
       title: "New inquiry · Glow Ritual Co.",
       body: "Ava Chen via web · $80–$120",
@@ -370,9 +350,60 @@ async function main() {
     },
   });
 
-  console.log("Seeded Kayla portal. Login: kayla@kaylathecreateher.com / createher2026");
-  console.log("Active deal id:", activeDeal.id);
-  console.log("Sample web inquiry:", webInquiry.id);
+  return { activeDeal, webInquiry };
+}
+
+async function main() {
+  const reset = process.env.SEED_RESET === "true";
+  if (reset) {
+    console.log("SEED_RESET=true — wiping database…");
+    await wipeAll();
+  }
+
+  const initialPassword =
+    process.env.SEED_OWNER_PASSWORD || (reset || process.env.NODE_ENV !== "production" ? "createher2026" : null);
+  if (!initialPassword && !(await prisma.user.findUnique({ where: { email: "kayla@kaylathecreateher.com" } }))) {
+    throw new Error(
+      "No owner user exists. Set SEED_OWNER_PASSWORD (or SEED_RESET=true locally) before seeding.",
+    );
+  }
+
+  const passwordHash = await hash(initialPassword || "createher2026", 10);
+  const kayla = await ensureKayla(
+    // Only set password on create / reset — upsert update path leaves hash alone unless reset
+    passwordHash,
+  );
+
+  if (reset && initialPassword) {
+    await prisma.user.update({
+      where: { id: kayla.id },
+      data: { passwordHash },
+    });
+  }
+
+  await ensureSiteContent();
+
+  const dealCount = await prisma.deal.count();
+  const portfolioCount = await prisma.portfolioItem.count();
+
+  if (dealCount === 0) {
+    const { activeDeal, webInquiry } = await seedDemoData(kayla.id);
+    console.log("Seeded demo deals + inquiries.");
+    console.log("Active deal id:", activeDeal.id);
+    console.log("Sample web inquiry:", webInquiry.id);
+  } else {
+    console.log(`Skipped demo deals (already have ${dealCount}).`);
+  }
+
+  if (portfolioCount === 0 && dealCount > 0) {
+    // Site may exist without reels — leave CMS to fill; no wipe.
+    console.log("Portfolio empty but deals exist — add reels in Studio → Site.");
+  }
+
+  console.log("Owner ready: kayla@kaylathecreateher.com");
+  if (reset || dealCount === 0) {
+    console.log("Temporary password set — change it in Studio → Settings after login.");
+  }
 }
 
 main()

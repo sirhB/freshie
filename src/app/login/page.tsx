@@ -18,9 +18,6 @@ export default function LoginPage() {
         <Suspense fallback={<div className="mt-8 h-48 animate-pulse rounded-2xl bg-white/50" />}>
           <LoginForm />
         </Suspense>
-        <p className="mt-6 text-xs text-ink/50">
-          Demo: kayla@kaylathecreateher.com / createher2026
-        </p>
       </div>
     </main>
   );
