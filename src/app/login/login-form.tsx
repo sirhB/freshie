@@ -61,7 +61,6 @@ export function LoginForm() {
           type="email"
           required
           autoComplete="username"
-          defaultValue="kayla@kaylathecreateher.com"
           className="w-full rounded-2xl border border-ink/10 bg-white/80 px-4 py-3 outline-none ring-rose/30 focus:ring-2"
         />
       </label>
@@ -72,7 +71,6 @@ export function LoginForm() {
           type="password"
           required
           autoComplete="current-password"
-          defaultValue="createher2026"
           className="w-full rounded-2xl border border-ink/10 bg-white/80 px-4 py-3 outline-none ring-rose/30 focus:ring-2"
         />
       </label>

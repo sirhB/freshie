@@ -7,64 +7,71 @@ Public media-kit site + private brand-obligations studio for UGC creator **kayla
 - Next.js (App Router)
 - Auth.js (credentials)
 - Prisma + **PostgreSQL** (Vercel DB prefix: `DB_`)
+- Vercel Blob for durable uploads (`BLOB_READ_WRITE_TOKEN`)
 - Instagram Messaging API webhook (official Meta)
 
 ## Setup
 
 ```bash
 npm install
-# Set DB_URL (see .env.example)
+cp .env.example .env   # fill DB_URL + AUTH_SECRET
 npx prisma migrate deploy
-npm run db:seed
+SEED_RESET=true npm run db:seed   # local/dev only — wipes then seeds
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Studio login (seeded)
+After first login, change the password under **Studio → Settings**.
 
-- Email: `kayla@kaylathecreateher.com`
-- Password: `createher2026`
+### Seed safety
 
-## Vercel database (`DB_` prefix)
-
-This app expects the Vercel storage prefix **`DB_`**, so the connection string is:
-
-| Prisma / app env | Typical aliases (auto-mapped) |
+| Command | Behavior |
 |---|---|
-| `DB_URL` | `DB_POSTGRES_PRISMA_URL`, `DB_POSTGRES_URL`, `DATABASE_URL` |
+| `npm run db:seed` | Upserts owner + site content; adds demo deals **only if none exist** |
+| `SEED_RESET=true npm run db:seed` | **Wipes** DB then seeds (local/dev only — never on production with real data) |
 
-Also set on Vercel:
+Production: run migrate via build; seed **once** on an empty DB, then have Kayla change her password. Do **not** re-run `SEED_RESET` in production.
 
-- `AUTH_SECRET` (required for login)
-- `NEXTAUTH_URL` = `https://kaylathecreateher.vercel.app`
+## Vercel environment
 
-The public homepage will still render with fallback portfolio content if the DB URL is missing; studio/auth need a working Postgres URL.
+| Variable | Required | Notes |
+|---|---|---|
+| `DB_URL` | yes | Vercel Postgres (`DB_` prefix). Aliases: `DB_POSTGRES_PRISMA_URL`, `DB_POSTGRES_URL`, `DATABASE_URL` |
+| `AUTH_SECRET` | yes | Required in production (no insecure fallback) |
+| `NEXTAUTH_URL` | yes | Exact public origin, e.g. `https://kaylathecreateher.vercel.app` or custom domain |
+| `BLOB_READ_WRITE_TOKEN` | yes (prod) | Vercel Blob — site images + deal files |
+| `INSTAGRAM_VERIFY_TOKEN` | for IG | Must match Meta webhook verify token |
+| `INSTAGRAM_APP_SECRET` | for IG | Required in production to accept webhooks |
+| `INSTAGRAM_PAGE_ACCESS_TOKEN` | for IG | Page token for sending replies |
+| `INSTAGRAM_BUSINESS_ACCOUNT_ID` | for IG | Marks Instagram as “connected” in Settings |
+| `INSTAGRAM_AUTO_REPLY` | optional | Default on; set `false` to disable |
 
-Build runs `prisma migrate deploy` automatically when a DB URL is present.
+Build runs `prisma migrate deploy` when a DB URL is present.
 
-After first deploy, seed once:
+## Instagram Messaging checklist
 
-```bash
-npx prisma db seed
-```
+1. Instagram Professional account linked to a Facebook Page.
+2. Meta Developer App → subscribe to `messages`.
+3. Callback URL: `{NEXTAUTH_URL}/api/instagram/webhook` (copy from **Studio → Settings**).
+4. Verify token = `INSTAGRAM_VERIFY_TOKEN`.
+5. Set the Instagram env vars on Vercel and redeploy.
+6. Test DM → appears in **Inquiries** → auto-reply (if enabled) → **Convert to deal**.
 
-(or run the seed script against production with the same `DB_*` URLs)
+Until tokens are set, use **Simulate Instagram DM** on the Inquiries board.
+
+Webhook routes: `GET/POST /api/instagram/webhook`. Studio reply: `POST /api/instagram/reply`.
 
 ## What it includes
 
 **Public**
-- Brand-first landing / media kit
-- Portfolio content styles
-- Rates + niches
-- Hire / inquiry form → saved to DB + live studio stream
+- Brand-first landing / media kit (editable in Studio → Site)
+- Instagram reels, socials (IG / YouTube / Threads / email), About me, rates
+- Hire / inquiry form → DB + live studio stream
 
 **Private studio**
-- Today dashboard, deals CRM, guideline checklists, deliverable pipeline, payments
-- Live inquiries (SSE) + convert-to-deal
-- Instagram bot (official webhook + auto-reply, demo simulate without tokens)
-
-## Instagram bot
-
-Webhook: `GET/POST /api/instagram/webhook`  
-See `.env.example` for `INSTAGRAM_*` values.
+- Today, deals CRM, guideline checklists, deliverable pipeline, calendar, payments, alerts
+- Live inquiries (SSE) + convert-to-deal + Instagram reply
+- Site CMS (WYSIWYG + image uploads via Blob)
+- Settings (password + Instagram connection status)
+- Getting Started guide (`/studio/getting-started`)

@@ -11,6 +11,8 @@ const nav = [
   { href: "/studio/calendar", label: "Calendar" },
   { href: "/studio/payments", label: "Payments" },
   { href: "/studio/site", label: "Site" },
+  { href: "/studio/getting-started", label: "Guide" },
+  { href: "/studio/settings", label: "Settings" },
 ];
 
 export function StudioNav({ unread = 0 }: { unread?: number }) {

@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
 import { auth } from "@/auth";
+import { storeUpload } from "@/lib/storage";
 
 const MAX_BYTES = 12 * 1024 * 1024;
 const ALLOWED = new Set([
@@ -34,18 +32,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Images only (jpg, png, webp, gif)" }, { status: 400 });
   }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
-  const ext = path.extname(file.name).replace(/[^.a-zA-Z0-9]/g, "") || ".jpg";
-  const fileName = `${randomUUID()}${ext.startsWith(".") ? ext : `.${ext}`}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "site");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, fileName), bytes);
-
-  return NextResponse.json({
-    ok: true,
-    url: `/uploads/site/${fileName}`,
-    fileName: file.name,
-    mimeType: mime,
-    sizeBytes: bytes.length,
-  });
+  try {
+    const stored = await storeUpload(file, {
+      fileName: file.name,
+      contentType: mime,
+      folder: "uploads/site",
+    });
+    return NextResponse.json({
+      ok: true,
+      url: stored.url,
+      fileName: file.name,
+      mimeType: mime,
+      sizeBytes: stored.sizeBytes,
+    });
+  } catch (error) {
+    console.error("[site/media]", error);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+  }
 }
