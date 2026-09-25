@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
@@ -19,6 +19,17 @@ export const metadata: Metadata = {
   title: "kaylathecreateher | Natural hair, beauty & lifestyle UGC · NYC",
   description:
     "Kayla is a NYC creative celebrating natural hair, beauty as self-care, wellness, lifestyle, and fashion — UGC for TikTok, Instagram, YouTube Shorts, and Amazon.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Kayla Studio",
+    statusBarStyle: "default",
+  },
+  applicationName: "kaylathecreateher Studio",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#6b2d5b",
 };
 
 export default function RootLayout({

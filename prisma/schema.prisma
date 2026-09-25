@@ -8,54 +8,83 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String
-  passwordHash  String
-  role          String         @default("owner")
-  createdAt     DateTime       @default(now())
-  deals         Deal[]
-  inquiries     Inquiry[]
-  notifications Notification[]
+  id              String         @id @default(cuid())
+  email           String         @unique
+  name            String
+  passwordHash    String
+  role            String         @default("owner")
+  alertEmail      String?
+  alertPhone      String?
+  emailAlertsOn   Boolean        @default(true)
+  smsAlertsOn     Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  deals           Deal[]
+  inquiries       Inquiry[]
+  notifications   Notification[]
 }
 
 model Brand {
-  id        String   @id @default(cuid())
-  name      String
-  niche     String?
-  website   String?
-  contactEmail String?
-  notes     String?
-  createdAt DateTime @default(now())
-  deals     Deal[]
+  id            String   @id @default(cuid())
+  name          String
+  niche         String?
+  website       String?
+  contactName   String?
+  contactEmail  String?
+  contactPhone  String?
+  notes         String?
+  logoUrl       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deals         Deal[]
 }
 
-model Deal {
+model DealTemplate {
   id              String   @id @default(cuid())
-  title           String
-  status          String   @default("inquiry") // inquiry, negotiating, active, delivered, paid, archived
-  platform        String   // TikTok, Instagram, YouTube, Amazon, Multi
-  contentType     String   // How-To, Unboxing, Product Review, Demo, UGC Images
-  rateCents       Int      @default(0)
-  currency        String   @default("USD")
-  dueDate         DateTime?
-  usageRightsDays Int?
+  name            String
+  platform        String
+  contentType     String
+  rateCents       Int      @default(10000)
   briefSummary    String?
   guidelines      String?
   talkingPoints   String?
-  productShipped  Boolean  @default(false)
-  productReceived Boolean  @default(false)
-  trackingNumber  String?
-  paymentStatus   String   @default("unpaid") // unpaid, invoiced, paid, overdue
-  paidAt          DateTime?
-  brandId         String
-  brand           Brand    @relation(fields: [brandId], references: [id])
-  ownerId         String
-  owner           User     @relation(fields: [ownerId], references: [id])
-  deliverables    Deliverable[]
-  checklistItems  ChecklistItem[]
+  usageRightsDays Int?     @default(90)
+  deliverablesJson String  @default("[]") // [{title,format}]
+  checklistJson   String   @default("[]") // [string]
+  sortOrder       Int      @default(0)
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+}
+
+model Deal {
+  id                String   @id @default(cuid())
+  title             String
+  status            String   @default("inquiry")
+  platform          String
+  contentType       String
+  rateCents         Int      @default(0)
+  currency          String   @default("USD")
+  dueDate           DateTime?
+  publishDate       DateTime? // planned go-live / post date
+  usageRightsDays   Int?
+  usageRightsEndsAt DateTime?
+  briefSummary      String?
+  guidelines        String?
+  talkingPoints     String?
+  productShipped    Boolean  @default(false)
+  productReceived   Boolean  @default(false)
+  trackingNumber    String?
+  paymentStatus     String   @default("unpaid")
+  paidAt            DateTime?
+  invoiceNumber     String?
+  invoiceUrl        String?
+  paymentLinkUrl    String?
+  brandId           String
+  brand             Brand    @relation(fields: [brandId], references: [id])
+  ownerId           String
+  owner             User     @relation(fields: [ownerId], references: [id])
+  deliverables      Deliverable[]
+  checklistItems    ChecklistItem[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Deliverable {
@@ -63,9 +92,10 @@ model Deliverable {
   dealId      String
   deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
   title       String
-  format      String   // video, image, caption, story
-  status      String   @default("todo") // todo, filming, editing, review, revisions, delivered, live
+  format      String
+  status      String   @default("todo")
   dueDate     DateTime?
+  publishDate DateTime? // when content should go live
   deliveredAt DateTime?
   liveUrl     String?
   notes       String?
@@ -79,26 +109,31 @@ model Attachment {
   deliverableId String?
   deliverable   Deliverable? @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
   dealId        String?
+  inquiryId     String?
+  inquiry       Inquiry?     @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
   fileName      String
   fileUrl       String
   mimeType      String?
   sizeBytes     Int          @default(0)
-  kind          String       @default("file") // file, brief, draft, final
+  kind          String       @default("file")
   createdAt     DateTime     @default(now())
 
   @@index([deliverableId])
   @@index([dealId])
+  @@index([inquiryId])
 }
 
 model Notification {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String   // deadline, inquiry, payment, product, system
+  type      String
   title     String
   body      String
   href      String?
   readAt    DateTime?
+  emailedAt DateTime?
+  smsSentAt DateTime?
   createdAt DateTime @default(now())
 
   @@index([userId, readAt])
@@ -122,44 +157,67 @@ model Inquiry {
   budget           String?
   platforms        String?
   message          String
-  status           String   @default("new") // new, reviewed, replied, converted, archived
-  source           String   @default("web") // web, instagram, demo
+  status           String   @default("new")
+  source           String   @default("web")
   igSenderId       String?
   externalThreadId String?
   autoRepliedAt    DateTime?
   convertedDealId  String?
+  leadScore        Int      @default(0) // 0-100
+  leadTier         String   @default("maybe") // hot, maybe, pass
   ownerId          String?
   owner            User?    @relation(fields: [ownerId], references: [id])
   events           InquiryEvent[]
+  messages         InquiryMessage[]
+  attachments      Attachment[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
   @@index([status])
   @@index([source])
   @@index([igSenderId])
+  @@index([leadTier])
 }
 
 model InquiryEvent {
   id        String   @id @default(cuid())
   inquiryId String
   inquiry   Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
-  type      String   // created, status_changed, auto_replied, converted, note
+  type      String
   message   String
-  meta      String?  // JSON blob for optional metadata
+  meta      String?
   createdAt DateTime @default(now())
 
   @@index([inquiryId])
 }
 
+model InquiryMessage {
+  id         String   @id @default(cuid())
+  inquiryId  String
+  inquiry    Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  direction  String   // inbound, outbound
+  body       String
+  mediaUrl   String?
+  mediaType  String?
+  externalId String?
+  createdAt  DateTime @default(now())
+
+  @@index([inquiryId, createdAt])
+}
+
 model PortfolioItem {
   id           String   @id @default(cuid())
   title        String
+  slug         String?  @unique
   category     String
   description  String?
   platform     String
-  mediaUrl     String?  // Instagram reel / external permalink
+  mediaUrl     String?
   thumbnailUrl String?
-  kind         String   @default("reel") // reel, link, note
+  kind         String   @default("reel") // reel, link, note, case_study
+  caseBody     String?  // markdown/plain case study story
+  resultsNote  String?
+  brandName    String?
   featured     Boolean  @default(false)
   published    Boolean  @default(true)
   sortOrder    Int      @default(0)
@@ -176,13 +234,18 @@ model SiteContent {
   aboutEyebrow   String   @default("About me")
   aboutHeadline  String   @default("A journey of self-expression and exploration.")
   aboutBody      String   @default("I'm Kayla (Rickalia N.) — a passionate creative content creator based in New York City. My world revolves around the beauty of hair, the art of beauty, the significance of wellness, the magic of lifestyle, and the ever-evolving trends of fashion. I create and speak on camera in English and Spanish.")
-  aboutBullets   String   @default("[\"How-tos, unboxings, product demos & reviews for TikTok, Instagram, YouTube Shorts & Amazon\",\"On-camera storytelling — plus selfie product stills when the brief calls for it\",\"Partnered with BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt & Simply Nature's Pledge\",\"Based in New York City · English & Spanish · typical delivery about 4 days\"]")
+  aboutBodyEs    String   @default("Soy Kayla (Rickalia N.) — creadora de contenido en Nueva York. Mi mundo gira en torno al cabello natural, la belleza como autocuidado, el wellness, el lifestyle y la moda. Creo y hablo en cámara en inglés y español.")
+  aboutBullets   String   @default("[\"How-tos, unboxings, product demos & reviews for TikTok, Instagram, YouTube Shorts & Amazon\",\"On-camera storytelling — plus selfie product stills when the brief calls for it\",\"Partnered with Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji & Loma Lux\",\"Based in New York City · English & Spanish · typical delivery about 4 days\"]")
+  aboutBulletsEs String   @default("[\"Tutoriales, unboxings, demos y reseñas para TikTok, Instagram, YouTube Shorts y Amazon\",\"Storytelling frente a cámara — y selfies de producto cuando el brief lo pide\",\"Colaboraciones con Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji y Loma Lux\",\"Basada en Nueva York · inglés y español · entrega típica ~4 días\"]")
   ratesEyebrow   String   @default("Starting rates")
   ratesJson      String   @default("[{\"label\":\"UGC video\",\"value\":\"$60–$100\"},{\"label\":\"Sponsored post\",\"value\":\"$100\"},{\"label\":\"UGC images\",\"value\":\"$15+\"}]")
-  ratesNote      String   @default("Brands she has worked with include BioSchwartz, Thinbi, Dr. Arthritis, MPG, Unlockt, and Simply Nature's Pledge. Campaigns typically deliver in about 4 days.")
+  ratesNote      String   @default("Brands she has worked with include Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji, Loma Lux, BioSchwartz, Thinbi, and Dr. Arthritis. Campaigns typically deliver in about 4 days.")
   hireEyebrow    String   @default("Collaborate")
   hireHeadline   String   @default("Send a brief. She'll manage the obligations in studio.")
   hireBody       String   @default("Public inquiries land directly in Kayla's private portal — deadlines, deliverables, product tracking, guideline checklists, and payments in one place.")
+  bookingUrl     String   @default("")
+  bookingLabel   String   @default("Book a call")
+  pressLogosJson String   @default("[{\"name\":\"Maybelline\",\"url\":\"\"},{\"name\":\"OLAPLEX\",\"url\":\"\"},{\"name\":\"Ulta Beauty\",\"url\":\"\"},{\"name\":\"Lifeway\",\"url\":\"\"},{\"name\":\"Poppi\",\"url\":\"\"}]")
   socialEyebrow  String   @default("Find Kayla")
   socialHeadline String   @default("Follow the createher journey.")
   socialsJson    String   @default("[{\"platform\":\"Instagram\",\"label\":\"@kaylathecreateher\",\"url\":\"https://www.instagram.com/kaylathecreateher/\"},{\"platform\":\"YouTube\",\"label\":\"@kaylathecreateher\",\"url\":\"https://www.youtube.com/@kaylathecreateher\"},{\"platform\":\"Threads\",\"label\":\"@kaylathecreateher\",\"url\":\"https://www.threads.net/@kaylathecreateher\"},{\"platform\":\"Email\",\"label\":\"kaylarcollab@gmail.com\",\"url\":\"mailto:kaylarcollab@gmail.com\"},{\"platform\":\"Assistant\",\"label\":\"Speak with my assistant\",\"url\":\"https://chat.linka.ai/liveagent/rickalia\"}]")

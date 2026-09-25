@@ -10,6 +10,12 @@ async function requireUser() {
   return session.user;
 }
 
+function parseOptionalDate(value: string | null | undefined) {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export async function PATCH(req: Request) {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -39,7 +45,11 @@ export async function PATCH(req: Request) {
 
   if (type === "deliverable") {
     const data = z
-      .object({ id: z.string(), status: z.string() })
+      .object({
+        id: z.string(),
+        status: z.string().optional(),
+        publishDate: z.string().nullable().optional(),
+      })
       .parse(body);
     const item = await prisma.deliverable.findUnique({
       where: { id: data.id },
@@ -51,15 +61,23 @@ export async function PATCH(req: Request) {
     await prisma.deliverable.update({
       where: { id: data.id },
       data: {
-        status: data.status,
-        deliveredAt:
-          data.status === "delivered" || data.status === "live"
-            ? new Date()
-            : item.deliveredAt,
+        ...(data.status !== undefined
+          ? {
+              status: data.status,
+              deliveredAt:
+                data.status === "delivered" || data.status === "live"
+                  ? new Date()
+                  : item.deliveredAt,
+            }
+          : {}),
+        ...(data.publishDate !== undefined
+          ? { publishDate: parseOptionalDate(data.publishDate) }
+          : {}),
       },
     });
     revalidatePath(`/studio/deals/${item.dealId}`);
     revalidatePath("/studio");
+    revalidatePath("/studio/calendar");
     return NextResponse.json({ ok: true });
   }
 
@@ -97,6 +115,53 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  if (type === "deal_brief") {
+    const data = z
+      .object({
+        id: z.string(),
+        briefSummary: z.string().optional(),
+        guidelines: z.string().optional(),
+        talkingPoints: z.string().optional(),
+        publishDate: z.string().nullable().optional(),
+        dueDate: z.string().nullable().optional(),
+        usageRightsDays: z.number().int().nullable().optional(),
+        paymentLinkUrl: z.string().nullable().optional(),
+      })
+      .parse(body);
+    const deal = await prisma.deal.findFirst({
+      where: { id: data.id, ownerId: user.id },
+    });
+    if (!deal) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const publishDate =
+      data.publishDate !== undefined ? parseOptionalDate(data.publishDate) : deal.publishDate;
+    const usageRightsDays =
+      data.usageRightsDays !== undefined ? data.usageRightsDays : deal.usageRightsDays;
+    const usageRightsEndsAt =
+      publishDate && usageRightsDays
+        ? new Date(publishDate.getTime() + usageRightsDays * 86400000)
+        : deal.usageRightsEndsAt;
+
+    await prisma.deal.update({
+      where: { id: data.id },
+      data: {
+        briefSummary: data.briefSummary ?? deal.briefSummary,
+        guidelines: data.guidelines ?? deal.guidelines,
+        talkingPoints: data.talkingPoints ?? deal.talkingPoints,
+        publishDate,
+        dueDate: data.dueDate !== undefined ? parseOptionalDate(data.dueDate) : deal.dueDate,
+        usageRightsDays,
+        usageRightsEndsAt,
+        paymentLinkUrl:
+          data.paymentLinkUrl !== undefined ? data.paymentLinkUrl : deal.paymentLinkUrl,
+      },
+    });
+    revalidatePath(`/studio/deals/${deal.id}`);
+    revalidatePath("/studio/calendar");
+    revalidatePath("/studio");
+    return NextResponse.json({ ok: true });
+  }
+
   if (type === "inquiry") {
     const data = z.object({ id: z.string(), status: z.string() }).parse(body);
     const { setInquiryStatus } = await import("@/lib/inquiries");
@@ -122,8 +187,12 @@ export async function POST(req: Request) {
       contentType: z.string().min(2),
       rateCents: z.number().int().nonnegative(),
       dueDate: z.string().optional(),
+      publishDate: z.string().optional(),
       briefSummary: z.string().optional(),
       guidelines: z.string().optional(),
+      talkingPoints: z.string().optional(),
+      usageRightsDays: z.number().int().optional(),
+      templateId: z.string().optional(),
     })
     .parse(body);
 
@@ -134,6 +203,50 @@ export async function POST(req: Request) {
     brand = await prisma.brand.create({ data: { name: data.brandName } });
   }
 
+  let deliverablesCreate: { title: string; format: string; status: string }[] = [
+    {
+      title: `${data.platform} ${data.contentType}`,
+      format: "video",
+      status: "todo",
+    },
+  ];
+  let checklistCreate: { label: string; sortOrder: number }[] = [
+    { label: "Confirm brief + talking points", sortOrder: 0 },
+    { label: "Track product shipment", sortOrder: 1 },
+    { label: "Film primary deliverable", sortOrder: 2 },
+    { label: "Self-QC against guidelines", sortOrder: 3 },
+    { label: "Send for brand review", sortOrder: 4 },
+  ];
+
+  if (data.templateId) {
+    const template = await prisma.dealTemplate.findUnique({ where: { id: data.templateId } });
+    if (template) {
+      try {
+        const dels = JSON.parse(template.deliverablesJson) as { title: string; format: string }[];
+        if (Array.isArray(dels) && dels.length) {
+          deliverablesCreate = dels.map((d) => ({
+            title: d.title,
+            format: d.format || "video",
+            status: "todo",
+          }));
+        }
+      } catch {
+        /* keep defaults */
+      }
+      try {
+        const checks = JSON.parse(template.checklistJson) as string[];
+        if (Array.isArray(checks) && checks.length) {
+          checklistCreate = checks.map((label, i) => ({ label, sortOrder: i }));
+        }
+      } catch {
+        /* keep defaults */
+      }
+    }
+  }
+
+  const publishDate = data.publishDate ? new Date(data.publishDate) : null;
+  const usageRightsDays = data.usageRightsDays ?? null;
+
   const deal = await prisma.deal.create({
     data: {
       title: data.title,
@@ -143,31 +256,23 @@ export async function POST(req: Request) {
       contentType: data.contentType,
       rateCents: data.rateCents,
       dueDate: data.dueDate ? new Date(data.dueDate) : null,
+      publishDate,
       briefSummary: data.briefSummary,
       guidelines: data.guidelines,
+      talkingPoints: data.talkingPoints,
+      usageRightsDays,
+      usageRightsEndsAt:
+        publishDate && usageRightsDays
+          ? new Date(publishDate.getTime() + usageRightsDays * 86400000)
+          : null,
       status: "active",
-      deliverables: {
-        create: [
-          {
-            title: `${data.platform} ${data.contentType}`,
-            format: "video",
-            status: "todo",
-          },
-        ],
-      },
-      checklistItems: {
-        create: [
-          { label: "Confirm brief + talking points", sortOrder: 0 },
-          { label: "Track product shipment", sortOrder: 1 },
-          { label: "Film primary deliverable", sortOrder: 2 },
-          { label: "Self-QC against guidelines", sortOrder: 3 },
-          { label: "Send for brand review", sortOrder: 4 },
-        ],
-      },
+      deliverables: { create: deliverablesCreate },
+      checklistItems: { create: checklistCreate },
     },
   });
 
   revalidatePath("/studio");
   revalidatePath("/studio/deals");
+  revalidatePath("/studio/calendar");
   return NextResponse.json({ ok: true, id: deal.id });
 }

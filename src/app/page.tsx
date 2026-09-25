@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import {
   DEFAULT_SITE,
   FALLBACK_PORTFOLIO,
+  serializePortfolioItem,
   serializeSiteContent,
   type PortfolioShape,
   type SiteContentShape,
@@ -13,6 +14,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { InquiryForm } from "@/components/InquiryForm";
 import { WorkReelGrid } from "@/components/WorkReelGrid";
 import { SocialLinksSection } from "@/components/SocialLinksSection";
+import { AboutBilingual } from "@/components/AboutBilingual";
+import { PressLogos } from "@/components/PressLogos";
+import { CaseStudiesSection } from "@/components/CaseStudiesSection";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +41,7 @@ async function getPortfolio(): Promise<PortfolioShape[]> {
       where: { published: true },
       orderBy: { sortOrder: "asc" },
     });
-    return items.length > 0 ? items : FALLBACK_PORTFOLIO;
+    return items.length > 0 ? items.map(serializePortfolioItem) : FALLBACK_PORTFOLIO;
   } catch (error) {
     console.error("[home] portfolio query failed; using fallback", error);
     return FALLBACK_PORTFOLIO;
@@ -46,6 +50,7 @@ async function getPortfolio(): Promise<PortfolioShape[]> {
 
 export default async function HomePage() {
   const [site, portfolio] = await Promise.all([getSite(), getPortfolio()]);
+  const reels = portfolio.filter((p) => p.kind !== "case_study");
 
   return (
     <main className="overflow-x-hidden">
@@ -86,12 +91,23 @@ export default async function HomePage() {
               >
                 Hire Kayla
               </a>
-              <a
-                href="#work"
-                className="rounded-full border border-pearl/35 px-6 py-3 text-sm text-pearl transition hover:bg-pearl/10"
-              >
-                Watch reels
-              </a>
+              {site.bookingUrl ? (
+                <a
+                  href={site.bookingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full border border-pearl/35 px-6 py-3 text-sm text-pearl transition hover:bg-pearl/10"
+                >
+                  {site.bookingLabel || "Book a call"}
+                </a>
+              ) : (
+                <a
+                  href="#work"
+                  className="rounded-full border border-pearl/35 px-6 py-3 text-sm text-pearl transition hover:bg-pearl/10"
+                >
+                  Watch reels
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -100,6 +116,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <PressLogos logos={site.pressLogos} />
+
       <section id="work" className="relative bg-pearl px-6 py-20 md:py-28">
         <div className="soft-grid pointer-events-none absolute inset-0 opacity-40" aria-hidden />
         <div className="relative mx-auto max-w-6xl">
@@ -107,7 +125,7 @@ export default async function HomePage() {
           <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-4xl text-ink md:text-5xl">
             {site.workHeadline}
           </h2>
-          <WorkReelGrid items={portfolio} />
+          <WorkReelGrid items={reels} />
           <p className="mt-8 text-sm text-ink/50">
             More on{" "}
             <a
@@ -121,6 +139,8 @@ export default async function HomePage() {
           </p>
         </div>
       </section>
+
+      <CaseStudiesSection items={portfolio} />
 
       <SocialLinksSection
         eyebrow={site.socialEyebrow}
@@ -138,27 +158,14 @@ export default async function HomePage() {
           aria-hidden
         />
         <div className="relative mx-auto grid max-w-6xl gap-14 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
-          <div>
-            <p className="text-sm uppercase tracking-[0.22em] text-berry">{site.aboutEyebrow}</p>
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl md:text-5xl">
-              {site.aboutHeadline}
-            </h2>
-            <p className="mt-5 max-w-xl text-ink/70">{site.aboutBody}</p>
-            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs uppercase tracking-[0.16em] text-berry/80">
-              <span>New York City</span>
-              <span>English &amp; Spanish</span>
-              <span>On camera</span>
-              <span>~4 day delivery</span>
-            </div>
-            <ul className="mt-8 space-y-4 text-sm text-ink/80">
-              {site.aboutBullets.map((item) => (
-                <li key={item} className="flex gap-3">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-berry" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <AboutBilingual
+            eyebrow={site.aboutEyebrow}
+            headline={site.aboutHeadline}
+            aboutBody={site.aboutBody}
+            aboutBodyEs={site.aboutBodyEs}
+            aboutBullets={site.aboutBullets}
+            aboutBulletsEs={site.aboutBulletsEs}
+          />
           <div className="rate-panel rounded-[2rem] bg-violet px-8 py-10 text-pearl shadow-[0_24px_60px_-28px_rgba(74,37,112,0.55)]">
             <p className="text-sm uppercase tracking-[0.2em] text-champagne">{site.ratesEyebrow}</p>
             <div className="mt-6 space-y-5">
@@ -167,6 +174,14 @@ export default async function HomePage() {
               ))}
             </div>
             <p className="mt-8 text-sm leading-relaxed text-pearl/75">{site.ratesNote}</p>
+            <a
+              href="/api/rate-card"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-6 inline-flex rounded-full border border-pearl/35 px-4 py-2 text-xs font-semibold text-pearl hover:bg-pearl/10"
+            >
+              Print rate card
+            </a>
           </div>
         </div>
       </section>
@@ -183,9 +198,19 @@ export default async function HomePage() {
               <span>TikTok · Instagram · YouTube · Amazon</span>
               <span>NYC-based · English &amp; Spanish</span>
             </div>
+            {site.bookingUrl && (
+              <a
+                href={site.bookingUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-6 inline-flex rounded-full bg-berry px-5 py-2.5 text-sm font-semibold text-pearl"
+              >
+                {site.bookingLabel || "Book a call"}
+              </a>
+            )}
             <Link
               href="/login"
-              className="mt-8 inline-flex text-sm font-semibold text-berry underline-offset-4 hover:underline"
+              className="mt-8 block text-sm font-semibold text-berry underline-offset-4 hover:underline"
             >
               Creator studio login →
             </Link>
@@ -207,6 +232,9 @@ export default async function HomePage() {
           <div className="flex flex-wrap gap-5">
             <a href="#work" className="hover:text-berry">
               Work
+            </a>
+            <a href="#cases" className="hover:text-berry">
+              Cases
             </a>
             <a href="#socials" className="hover:text-berry">
               Socials

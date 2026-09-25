@@ -23,10 +23,20 @@ export default async function CalendarPage() {
   const deals = await prisma.deal.findMany({
     where: {
       ownerId: session!.user!.id,
-      dueDate: {
-        gte: monthStart,
-        lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
-      },
+      OR: [
+        {
+          dueDate: {
+            gte: monthStart,
+            lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+          },
+        },
+        {
+          publishDate: {
+            gte: monthStart,
+            lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+          },
+        },
+      ],
     },
     include: { brand: true },
   });
@@ -34,36 +44,61 @@ export default async function CalendarPage() {
   const deliverables = await prisma.deliverable.findMany({
     where: {
       deal: { ownerId: session!.user!.id },
-      dueDate: {
-        gte: monthStart,
-        lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
-      },
+      OR: [
+        {
+          dueDate: {
+            gte: monthStart,
+            lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+          },
+        },
+        {
+          publishDate: {
+            gte: monthStart,
+            lt: new Date(now.getFullYear(), now.getMonth() + 1, 1),
+          },
+        },
+      ],
     },
     include: { deal: { include: { brand: true } } },
   });
 
   const byDay = new Map<number, { label: string; href: string; tone: string }[]>();
-  for (const deal of deals) {
-    if (!deal.dueDate) continue;
-    const day = deal.dueDate.getDate();
+  function push(day: number, entry: { label: string; href: string; tone: string }) {
     const list = byDay.get(day) || [];
-    list.push({
-      label: `${deal.brand.name}: ${deal.title}`,
-      href: `/studio/deals/${deal.id}`,
-      tone: "deal",
-    });
+    list.push(entry);
     byDay.set(day, list);
   }
+  for (const deal of deals) {
+    if (deal.dueDate) {
+      push(deal.dueDate.getDate(), {
+        label: `Due · ${deal.brand.name}: ${deal.title}`,
+        href: `/studio/deals/${deal.id}`,
+        tone: "deal",
+      });
+    }
+    if (deal.publishDate) {
+      push(deal.publishDate.getDate(), {
+        label: `Live · ${deal.brand.name}: ${deal.title}`,
+        href: `/studio/deals/${deal.id}`,
+        tone: "live",
+      });
+    }
+  }
   for (const item of deliverables) {
-    if (!item.dueDate) continue;
-    const day = item.dueDate.getDate();
-    const list = byDay.get(day) || [];
-    list.push({
-      label: `${item.deal.brand.name}: ${item.title}`,
-      href: `/studio/deals/${item.dealId}`,
-      tone: "deliverable",
-    });
-    byDay.set(day, list);
+    if (item.dueDate) {
+      push(item.dueDate.getDate(), {
+        label: `Due · ${item.deal.brand.name}: ${item.title}`,
+        href: `/studio/deals/${item.dealId}`,
+        tone: "deliverable",
+      });
+    }
+    if (item.publishDate) {
+      push(item.publishDate.getDate(), {
+        label: `Live · ${item.deal.brand.name}: ${item.title}`,
+        href: `/studio/deals/${item.dealId}`,
+        tone: "live",
+      });
+    }
   }
 
   const monthLabel = now.toLocaleString("en-US", { month: "long", year: "numeric" });
@@ -78,13 +113,13 @@ export default async function CalendarPage() {
       <StudioPageHeader
         eyebrow="Schedule"
         title={monthLabel}
-        description="Deal and deliverable due dates for the month — tap any item to open the brief."
+        description="Deal due dates and go-live publish dates for the month — tap any item to open the brief."
       />
 
       {deals.length === 0 && deliverables.length === 0 ? (
         <EmptyState
-          title="No due dates this month"
-          body="Add due dates on deals and deliverables to fill Kayla’s obligation calendar."
+          title="No dates this month"
+          body="Add due dates or go-live publish dates on deals and deliverables to fill Kayla’s obligation calendar."
           href="/studio/deals"
           cta="View deals"
         />
@@ -120,7 +155,9 @@ export default async function CalendarPage() {
                           className={`block truncate rounded-md px-1.5 py-0.5 text-[10px] leading-tight ${
                             ev.tone === "deal"
                               ? "bg-berry/15 text-berry"
-                              : "bg-lilac/50 text-violet"
+                              : ev.tone === "live"
+                                ? "bg-success/15 text-success"
+                                : "bg-lilac/50 text-violet"
                           }`}
                         >
                           {ev.label}

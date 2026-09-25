@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  addInquiryMessage,
   createInquiry,
   logInquiryEvent,
 } from "@/lib/inquiries";
@@ -58,13 +59,57 @@ export async function POST(req: Request) {
   const createdIds: string[] = [];
 
   for (const msg of messages) {
-    const existing = await prisma.inquiry.findFirst({
-      where: { externalThreadId: msg.messageId },
+    const duplicate = await prisma.inquiryMessage.findFirst({
+      where: { externalId: msg.messageId },
     });
-    if (existing) continue;
+    if (duplicate) continue;
+
+    let inquiry = await prisma.inquiry.findFirst({
+      where: {
+        igSenderId: msg.senderId,
+        status: { notIn: ["converted", "archived"] },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    if (inquiry) {
+      await addInquiryMessage({
+        inquiryId: inquiry.id,
+        direction: "inbound",
+        body: msg.text,
+        mediaUrl: msg.mediaUrl,
+        mediaType: msg.mediaType,
+        externalId: msg.messageId,
+      });
+      if (msg.mediaUrl) {
+        await prisma.attachment.create({
+          data: {
+            inquiryId: inquiry.id,
+            fileName: msg.mediaUrl.split("/").pop() || "dm-media",
+            fileUrl: msg.mediaUrl,
+            mimeType: msg.mediaType,
+            kind: "dm_media",
+          },
+        });
+      }
+      await prisma.inquiry.update({
+        where: { id: inquiry.id },
+        data: {
+          message: msg.text,
+          status: inquiry.status === "replied" ? "reviewed" : inquiry.status,
+        },
+      });
+      await logInquiryEvent(inquiry.id, "dm", "Follow-up Instagram DM", {
+        messageId: msg.messageId,
+        hasMedia: Boolean(msg.mediaUrl),
+      });
+      publishInquiryEvent("inquiry.updated", inquiry.id);
+      createdIds.push(inquiry.id);
+      continue;
+    }
 
     const brandName = guessBrandFromMessage(msg.text, `IG lead ${msg.senderId.slice(-4)}`);
-    const inquiry = await createInquiry({
+    inquiry = await createInquiry({
       brandName,
       contactName: `Instagram ${msg.senderId.slice(-6)}`,
       email: `ig.${msg.senderId}@instagram.local`,
@@ -73,6 +118,8 @@ export async function POST(req: Request) {
       source: "instagram",
       igSenderId: msg.senderId,
       externalThreadId: msg.messageId,
+      mediaUrl: msg.mediaUrl,
+      mediaType: msg.mediaType,
     });
     createdIds.push(inquiry.id);
 
@@ -81,6 +128,11 @@ export async function POST(req: Request) {
       const sent = await sendInstagramMessage(msg.senderId, reply);
 
       if (sent.ok || sent.demo) {
+        await addInquiryMessage({
+          inquiryId: inquiry.id,
+          direction: "outbound",
+          body: reply,
+        });
         await prisma.inquiry.update({
           where: { id: inquiry.id },
           data: {

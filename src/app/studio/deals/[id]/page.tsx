@@ -9,8 +9,17 @@ import {
   DeliverableStatusSelect,
 } from "@/components/StudioActions";
 import { UploadPanel } from "@/components/studio/UploadPanel";
+import {
+  DealBriefEditor,
+  DeliverablePublishDate,
+} from "@/components/studio/DealBriefEditor";
 
 export const dynamic = "force-dynamic";
+
+function toDateInput(d: Date | null | undefined) {
+  if (!d) return "";
+  return d.toISOString().slice(0, 10);
+}
 
 export default async function DealDetailPage({
   params,
@@ -50,7 +59,21 @@ export default async function DealDetailPage({
         <p className="mt-2 text-ink/60">
           {deal.platform} · {deal.contentType} · {formatMoney(deal.rateCents)} · due{" "}
           {formatDate(deal.dueDate)}
+          {deal.publishDate ? ` · go-live ${formatDate(deal.publishDate)}` : ""}
         </p>
+        {deal.invoiceNumber && (
+          <p className="mt-1 text-sm text-ink/50">
+            Invoice{" "}
+            <a
+              href={`/api/deals/${deal.id}/invoice`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-berry hover:underline"
+            >
+              {deal.invoiceNumber}
+            </a>
+          </p>
+        )}
       </div>
 
       <DealControls
@@ -62,37 +85,33 @@ export default async function DealDetailPage({
       />
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <section className="space-y-4">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl">Brief</h2>
-          <div className="rounded-2xl border border-ink/8 bg-white/70 p-5 text-sm leading-relaxed text-ink/75">
-            <p>{deal.briefSummary || "No summary yet."}</p>
-            {deal.talkingPoints && (
-              <div className="mt-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-rose">Talking points</p>
-                <pre className="mt-2 whitespace-pre-wrap font-[family-name:var(--font-body)]">
-                  {deal.talkingPoints}
-                </pre>
-              </div>
-            )}
-          </div>
-          <div className="rounded-2xl border border-ink/8 bg-white/70 p-5 text-sm leading-relaxed">
-            <p className="text-xs uppercase tracking-[0.16em] text-rose">Guidelines</p>
-            <p className="mt-2 text-ink/75">{deal.guidelines || "No guidelines attached."}</p>
-          </div>
-          {(deal.trackingNumber || deal.usageRightsDays) && (
-            <div className="rounded-2xl border border-ink/8 bg-white/70 p-5 text-sm">
+        <section className="space-y-4 rounded-2xl border border-ink/8 bg-white/70 p-5">
+          <DealBriefEditor
+            dealId={deal.id}
+            briefSummary={deal.briefSummary || ""}
+            guidelines={deal.guidelines || ""}
+            talkingPoints={deal.talkingPoints || ""}
+            publishDate={toDateInput(deal.publishDate)}
+            dueDate={toDateInput(deal.dueDate)}
+            usageRightsDays={deal.usageRightsDays?.toString() || ""}
+            paymentLinkUrl={deal.paymentLinkUrl || ""}
+            invoiceNumber={deal.invoiceNumber}
+          />
+          {(deal.trackingNumber || deal.usageRightsEndsAt) && (
+            <div className="border-t border-ink/8 pt-4 text-sm">
               {deal.trackingNumber && (
                 <p>
                   Tracking: <span className="font-medium">{deal.trackingNumber}</span>
                 </p>
               )}
-              {deal.usageRightsDays && (
-                <p className="mt-1 text-ink/60">Usage rights: {deal.usageRightsDays} days</p>
+              {deal.usageRightsEndsAt && (
+                <p className="mt-1 text-ink/60">
+                  Usage rights end {formatDate(deal.usageRightsEndsAt)}
+                </p>
               )}
             </div>
           )}
-
-          <div className="rounded-2xl border border-ink/8 bg-white/70 p-5">
+          <div className="border-t border-ink/8 pt-4">
             <UploadPanel dealId={deal.id} attachments={attachments} />
           </div>
         </section>
@@ -132,9 +151,16 @@ export default async function DealDetailPage({
                     <p className="font-medium">{item.title}</p>
                     <p className="text-xs text-ink/50">
                       {item.format} · due {formatDate(item.dueDate)}
+                      {item.publishDate ? ` · live ${formatDate(item.publishDate)}` : ""}
                     </p>
                   </div>
-                  <DeliverableStatusSelect id={item.id} status={item.status} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <DeliverablePublishDate
+                      id={item.id}
+                      publishDate={toDateInput(item.publishDate)}
+                    />
+                    <DeliverableStatusSelect id={item.id} status={item.status} />
+                  </div>
                 </div>
               ))}
             </div>

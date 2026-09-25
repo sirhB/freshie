@@ -608,6 +608,14 @@ export function SiteEditor({
                 value={site.aboutBody}
                 onChange={(v) => setField("aboutBody", v)}
               />
+              <p className="mt-4 text-xs uppercase tracking-[0.14em] text-ink/40">Spanish about</p>
+              <EditableText
+                multiline
+                rows={4}
+                className="mt-2 max-w-xl text-ink/70"
+                value={site.aboutBodyEs || ""}
+                onChange={(v) => setField("aboutBodyEs", v)}
+              />
               <ul className="mt-8 space-y-3">
                 {site.aboutBullets.map((bullet, index) => (
                   <li key={index} className="flex gap-3">
@@ -731,6 +739,67 @@ export function SiteEditor({
               value={site.hireBody}
               onChange={(v) => setField("hireBody", v)}
             />
+            <div className="mt-6 grid max-w-xl gap-3 sm:grid-cols-2">
+              <label className="block text-xs uppercase tracking-[0.14em] text-ink/45">
+                Booking URL
+                <input
+                  className="mt-1 w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm normal-case tracking-normal"
+                  value={site.bookingUrl || ""}
+                  onChange={(e) => setField("bookingUrl", e.target.value)}
+                  placeholder="https://cal.com/…"
+                />
+              </label>
+              <label className="block text-xs uppercase tracking-[0.14em] text-ink/45">
+                Booking label
+                <input
+                  className="mt-1 w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm normal-case tracking-normal"
+                  value={site.bookingLabel || ""}
+                  onChange={(e) => setField("bookingLabel", e.target.value)}
+                />
+              </label>
+            </div>
+            <div className="mt-6 max-w-xl space-y-2">
+              <p className="text-xs uppercase tracking-[0.14em] text-ink/45">Press logos</p>
+              {(site.pressLogos || []).map((logo, index) => (
+                <div key={index} className="flex gap-2">
+                  <input
+                    className="flex-1 rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm"
+                    value={logo.name}
+                    onChange={(e) =>
+                      setField(
+                        "pressLogos",
+                        (site.pressLogos || []).map((l, i) =>
+                          i === index ? { ...l, name: e.target.value } : l,
+                        ),
+                      )
+                    }
+                    placeholder="Brand"
+                  />
+                  <input
+                    className="flex-1 rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm"
+                    value={logo.url}
+                    onChange={(e) =>
+                      setField(
+                        "pressLogos",
+                        (site.pressLogos || []).map((l, i) =>
+                          i === index ? { ...l, url: e.target.value } : l,
+                        ),
+                      )
+                    }
+                    placeholder="https://…"
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                className="text-sm font-semibold text-berry"
+                onClick={() =>
+                  setField("pressLogos", [...(site.pressLogos || []), { name: "", url: "" }])
+                }
+              >
+                + Add press logo
+              </button>
+            </div>
             <p className="mt-6 text-sm text-ink/45">Hire form stays on the live site (not edited here).</p>
           </div>
         </section>

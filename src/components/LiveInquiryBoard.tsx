@@ -11,6 +11,23 @@ type InquiryEvent = {
   createdAt: string;
 };
 
+type InquiryMessage = {
+  id: string;
+  direction: string;
+  body: string;
+  mediaUrl: string | null;
+  mediaType: string | null;
+  createdAt: string;
+};
+
+type InquiryAttachment = {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  mimeType: string | null;
+  kind: string;
+};
+
 export type InquiryRow = {
   id: string;
   brandName: string;
@@ -24,13 +41,18 @@ export type InquiryRow = {
   igSenderId: string | null;
   autoRepliedAt: string | null;
   convertedDealId: string | null;
+  leadScore?: number;
+  leadTier?: string;
   createdAt: string;
   updatedAt: string;
   events?: InquiryEvent[];
+  messages?: InquiryMessage[];
+  attachments?: InquiryAttachment[];
 };
 
 const STATUSES = ["all", "new", "reviewed", "replied", "converted", "archived"] as const;
 const SOURCES = ["all", "web", "instagram", "demo"] as const;
+const TIERS = ["all", "hot", "maybe", "pass"] as const;
 
 function formatWhen(iso: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -39,6 +61,12 @@ function formatWhen(iso: string) {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(iso));
+}
+
+function tierTone(tier?: string) {
+  if (tier === "hot") return "bg-rose/20 text-berry";
+  if (tier === "pass") return "bg-ink/5 text-ink/50";
+  return "bg-lilac/40 text-violet";
 }
 
 export function LiveInquiryBoard({
@@ -52,6 +80,7 @@ export function LiveInquiryBoard({
   const [inquiries, setInquiries] = useState(initialInquiries);
   const [status, setStatus] = useState<(typeof STATUSES)[number]>("all");
   const [source, setSource] = useState<(typeof SOURCES)[number]>("all");
+  const [tier, setTier] = useState<(typeof TIERS)[number]>("all");
   const [live, setLive] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -109,12 +138,18 @@ export function LiveInquiryBoard({
     return () => es.close();
   }, [refresh]);
 
+  const filtered = useMemo(() => {
+    if (tier === "all") return inquiries;
+    return inquiries.filter((i) => (i.leadTier || "maybe") === tier);
+  }, [inquiries, tier]);
+
   const counts = useMemo(() => {
-    const base = { new: 0, reviewed: 0, replied: 0, converted: 0 };
+    const base = { new: 0, reviewed: 0, replied: 0, converted: 0, hot: 0 };
     for (const item of inquiries) {
       if (item.status in base) {
         base[item.status as keyof typeof base] += 1;
       }
+      if (item.leadTier === "hot") base.hot += 1;
     }
     return base;
   }, [inquiries]);
@@ -150,7 +185,7 @@ export function LiveInquiryBoard({
       body: JSON.stringify({
         brandName: "Lumen Hair Co.",
         senderName: "Lumen partnerships",
-        text: "Hey Kayla! Loved your hair how-tos. We need 2 soft glam TikTok UGC videos for our new leave-in mist — can you share rates + turnaround?",
+        text: "Hey Kayla! Loved your hair how-tos. We need 2 soft glam TikTok UGC videos for our new leave-in mist — budget $200, can you share rates + turnaround this week?",
       }),
     });
     setSimulating(false);
@@ -170,7 +205,7 @@ export function LiveInquiryBoard({
           </span>
           {flash && <span className="status-pill bg-blush/50 text-berry">{flash}</span>}
           <span className="text-ink/45">
-            {counts.new} new · {counts.reviewed} reviewed · {counts.converted} converted
+            {counts.new} new · {counts.hot} hot · {counts.converted} converted
           </span>
         </div>
         <button
@@ -192,9 +227,7 @@ export function LiveInquiryBoard({
           )}
         </p>
         <p className="mt-1">
-          Webhook: <code className="text-xs">/api/instagram/webhook</code>. Without Meta tokens,
-          use Simulate to watch live intake + auto-reply logging. With tokens, DMs create inquiries
-          and send Kayla&apos;s collab auto-reply.
+          Threads keep follow-up DMs + media on the same lead. Lead scores prioritize hot budgets.
         </p>
       </div>
 
@@ -235,13 +268,27 @@ export function LiveInquiryBoard({
             ))}
           </select>
         </label>
+        <label className="text-xs uppercase tracking-[0.14em] text-ink/45">
+          Lead tier
+          <select
+            value={tier}
+            onChange={(e) => setTier(e.target.value as (typeof TIERS)[number])}
+            className="ml-2 rounded-full border border-ink/10 bg-white/80 px-3 py-1.5 text-sm normal-case tracking-normal text-ink"
+          >
+            {TIERS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="space-y-4">
         {replyFlash && (
           <p className="rounded-full bg-blush/40 px-4 py-2 text-sm text-berry">{replyFlash}</p>
         )}
-        {inquiries.map((inq) => (
+        {filtered.map((inq) => (
           <article key={inq.id} className="rounded-2xl border border-ink/8 bg-white/70 p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -249,6 +296,9 @@ export function LiveInquiryBoard({
                   <h2 className="text-lg font-semibold">{inq.brandName}</h2>
                   <span className="status-pill bg-blush/40">{inq.source}</span>
                   <span className="status-pill">{inq.status}</span>
+                  <span className={`status-pill ${tierTone(inq.leadTier)}`}>
+                    {inq.leadTier || "maybe"} · {inq.leadScore ?? 0}
+                  </span>
                 </div>
                 <p className="mt-1 text-sm text-ink/55">
                   {inq.contactName} · {inq.email} · {formatWhen(inq.createdAt)}
@@ -294,6 +344,52 @@ export function LiveInquiryBoard({
               {inq.igSenderId && <span>IG sender: {inq.igSenderId}</span>}
             </div>
 
+            {inq.attachments && inq.attachments.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {inq.attachments.map((att) => (
+                  <a
+                    key={att.id}
+                    href={att.fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full border border-ink/10 bg-pearl/70 px-3 py-1 text-xs text-berry"
+                  >
+                    {att.mimeType?.startsWith("image/") ? "Image" : "DM media"} · {att.fileName}
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {inq.messages && inq.messages.length > 0 && (
+              <div className="mt-4 max-h-48 space-y-2 overflow-y-auto rounded-xl border border-ink/8 bg-pearl/50 p-3">
+                <p className="text-xs uppercase tracking-[0.14em] text-rose">Thread</p>
+                {inq.messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={`text-xs ${
+                      m.direction === "outbound" ? "text-berry" : "text-ink/70"
+                    }`}
+                  >
+                    <span className="font-semibold">
+                      {m.direction === "outbound" ? "Kayla" : "Brand"}
+                    </span>{" "}
+                    · {formatWhen(m.createdAt)}
+                    <p className="mt-0.5 whitespace-pre-wrap">{m.body}</p>
+                    {m.mediaUrl && (
+                      <a
+                        href={m.mediaUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline"
+                      >
+                        View attachment
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {inq.igSenderId && (
               <div className="mt-4 space-y-2 border-t border-ink/8 pt-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-rose">Reply on Instagram</p>
@@ -334,7 +430,7 @@ export function LiveInquiryBoard({
             )}
           </article>
         ))}
-        {inquiries.length === 0 && (
+        {filtered.length === 0 && (
           <p className="text-sm text-ink/50">
             No inquiries for this filter. Submit the public hire form or simulate an Instagram DM.
           </p>
