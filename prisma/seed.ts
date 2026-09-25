@@ -19,11 +19,17 @@ async function wipeAll() {
   await prisma.deal.deleteMany();
   await prisma.notification.deleteMany().catch(() => undefined);
   try {
+    await prisma.inquiryMessage.deleteMany();
+  } catch {
+    /* ignore */
+  }
+  try {
     await prisma.inquiryEvent.deleteMany();
   } catch {
     /* ignore */
   }
   await prisma.inquiry.deleteMany();
+  await prisma.dealTemplate.deleteMany().catch(() => undefined);
   await prisma.brand.deleteMany();
   await prisma.portfolioItem.deleteMany();
   await prisma.siteContent.deleteMany().catch(() => undefined);
@@ -91,6 +97,22 @@ async function ensureSiteContent() {
       aboutBullets,
       ratesNote,
       socialsJson,
+      aboutBodyEs:
+        "Soy Kayla (Rickalia N.) — creadora de contenido en Nueva York. Mi mundo gira en torno al cabello natural, la belleza como autocuidado, el wellness, el lifestyle y la moda. Creo y hablo en cámara en inglés y español.",
+      aboutBulletsEs: JSON.stringify([
+        "Tutoriales, unboxings, demos y reseñas para TikTok, Instagram, YouTube Shorts y Amazon",
+        "Storytelling frente a cámara — y selfies de producto cuando el brief lo pide",
+        "Colaboraciones con Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji y Loma Lux",
+        "Basada en Nueva York · inglés y español · entrega típica ~4 días",
+      ]),
+      pressLogosJson: JSON.stringify([
+        { name: "Maybelline", url: "" },
+        { name: "OLAPLEX", url: "" },
+        { name: "Ulta Beauty", url: "" },
+        { name: "Lifeway", url: "" },
+        { name: "Poppi", url: "" },
+      ]),
+      bookingLabel: "Book a call",
     },
     create: {
       id: "singleton",
@@ -102,9 +124,25 @@ async function ensureSiteContent() {
       aboutHeadline: "A journey of self-expression and exploration.",
       aboutBody:
         "I'm Kayla (Rickalia N.) — a passionate creative content creator based in New York City. My world revolves around the beauty of hair, the art of beauty, the significance of wellness, the magic of lifestyle, and the ever-evolving trends of fashion. I create and speak on camera in English and Spanish.",
+      aboutBodyEs:
+        "Soy Kayla (Rickalia N.) — creadora de contenido en Nueva York. Mi mundo gira en torno al cabello natural, la belleza como autocuidado, el wellness, el lifestyle y la moda. Creo y hablo en cámara en inglés y español.",
       aboutBullets,
+      aboutBulletsEs: JSON.stringify([
+        "Tutoriales, unboxings, demos y reseñas para TikTok, Instagram, YouTube Shorts y Amazon",
+        "Storytelling frente a cámara — y selfies de producto cuando el brief lo pide",
+        "Colaboraciones con Maybelline, OLAPLEX, Ulta Beauty, Lifeway, Poppi, TPH by Taraji y Loma Lux",
+        "Basada en Nueva York · inglés y español · entrega típica ~4 días",
+      ]),
       ratesJson,
       ratesNote,
+      pressLogosJson: JSON.stringify([
+        { name: "Maybelline", url: "" },
+        { name: "OLAPLEX", url: "" },
+        { name: "Ulta Beauty", url: "" },
+        { name: "Lifeway", url: "" },
+        { name: "Poppi", url: "" },
+      ]),
+      bookingLabel: "Book a call",
       socialsJson,
       footerLine:
         "New York City · English & Spanish · Hair · Beauty · Wellness · Lifestyle · Fashion",
@@ -113,6 +151,9 @@ async function ensureSiteContent() {
 }
 
 async function seedDemoData(kaylaId: string) {
+  const { DEFAULT_DEAL_TEMPLATES } = await import("../src/lib/deal-templates");
+  await prisma.dealTemplate.createMany({ data: DEFAULT_DEAL_TEMPLATES });
+
   const brands = await Promise.all(
     [
       { name: "Maybelline", niche: "Beauty", contactEmail: "creators@maybelline.com" },
@@ -134,6 +175,7 @@ async function seedDemoData(kaylaId: string) {
       contentType: "How-To",
       rateCents: 10000,
       dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
+      publishDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
       usageRightsDays: 90,
       briefSummary: "Face-to-camera how-to showing application + 3-day hair feel.",
       guidelines:
@@ -230,9 +272,19 @@ async function seedDemoData(kaylaId: string) {
         "Hi Kayla! We love your natural hair content and want a 20–30s UGC how-to for our leave-in mist. Product ships next week.",
       status: "new",
       source: "web",
+      leadScore: 72,
+      leadTier: "hot",
       ownerId: kaylaId,
       events: {
-        create: [{ type: "created", message: "Inquiry received via web" }],
+        create: [{ type: "created", message: "Inquiry received via web · score 72 (hot)" }],
+      },
+      messages: {
+        create: [
+          {
+            direction: "inbound",
+            body: "Hi Kayla! We love your natural hair content and want a 20–30s UGC how-to for our leave-in mist. Product ships next week.",
+          },
+        ],
       },
     },
   });
@@ -247,16 +299,31 @@ async function seedDemoData(kaylaId: string) {
         "Hi Kayla! We loved your hair content. Can you create a soft glam leave-in mist Reel for us?",
       status: "reviewed",
       source: "instagram",
+      leadScore: 58,
+      leadTier: "maybe",
       igSenderId: "ig_softsilk_demo",
       externalThreadId: "seed_ig_1",
       autoRepliedAt: new Date(),
       ownerId: kaylaId,
       events: {
         create: [
-          { type: "created", message: "Inquiry received via instagram" },
+          { type: "created", message: "Inquiry received via instagram · score 58 (maybe)" },
           {
             type: "auto_replied",
             message: "Auto-reply sent via Instagram Messaging API",
+          },
+        ],
+      },
+      messages: {
+        create: [
+          {
+            direction: "inbound",
+            body: "Hi Kayla! We loved your hair content. Can you create a soft glam leave-in mist Reel for us?",
+            externalId: "seed_ig_1",
+          },
+          {
+            direction: "outbound",
+            body: "Hey! Thanks for reaching out to kaylathecreateher ✨",
           },
         ],
       },
@@ -267,30 +334,35 @@ async function seedDemoData(kaylaId: string) {
     data: [
       {
         title: "Lifeway Kefir 40 years",
+        slug: "lifeway-kefir-40",
         category: "Lifestyle",
         description: "Celebrating 40 years with Lifeway Kefir in NYC",
         platform: "Instagram",
         mediaUrl: "https://www.instagram.com/reel/DZ71HwQx5sY/",
         thumbnailUrl: "/reels/lifeway-kefir.jpg",
         kind: "reel",
+        brandName: "Lifeway",
         featured: true,
         published: true,
         sortOrder: 0,
       },
       {
         title: "Maybelline lip combo",
+        slug: "maybelline-lip-combo",
         category: "Beauty",
         description: "Maybelline Super Stay peel-off lip combo",
         platform: "Instagram",
         mediaUrl: "https://www.instagram.com/reel/DdRd1DkxpUY/",
         thumbnailUrl: "/reels/maybelline-lip.jpg",
         kind: "reel",
+        brandName: "Maybelline",
         featured: true,
         published: true,
         sortOrder: 1,
       },
       {
         title: "Mini braids on natural hair",
+        slug: "mini-braids",
         category: "Hair",
         description: "Mini braids styling on natural hair",
         platform: "Instagram",
@@ -303,39 +375,64 @@ async function seedDemoData(kaylaId: string) {
       },
       {
         title: "OLAPLEX braid-out shine",
+        slug: "olaplex-braidout",
         category: "Hair",
         description: "OLAPLEX N°7 Bonding Oil on a braid-out",
         platform: "Instagram",
         mediaUrl: "https://www.instagram.com/reel/Dby9Zc1RwTW/",
         thumbnailUrl: "/reels/olaplex-braidout.jpg",
         kind: "reel",
+        brandName: "OLAPLEX",
         featured: true,
         published: true,
         sortOrder: 3,
       },
       {
         title: "OLAPLEX × Poppi duo",
+        slug: "olaplex-poppi",
         category: "Hair",
         description: "ICONIC duo — OLAPLEX and Poppi shake, spritz, shine",
         platform: "Instagram",
         mediaUrl: "https://www.instagram.com/reel/DbtONb6x0b3/",
         thumbnailUrl: "/reels/olaplex-poppi.jpg",
         kind: "reel",
+        brandName: "OLAPLEX",
         featured: true,
         published: true,
         sortOrder: 4,
       },
       {
         title: "Wash day with OLAPLEX",
+        slug: "olaplex-washday",
         category: "Hair",
         description: "Wash day with N°4 Curl Shampoo & N°5 Curl Conditioner",
         platform: "Instagram",
         mediaUrl: "https://www.instagram.com/reel/DaoWN4vRecs/",
         thumbnailUrl: "/reels/olaplex-washday.jpg",
         kind: "reel",
+        brandName: "OLAPLEX",
         featured: true,
         published: true,
         sortOrder: 5,
+      },
+      {
+        title: "Maybelline Super Stay lip story",
+        slug: "case-maybelline-super-stay",
+        category: "Beauty",
+        description:
+          "Paid UGC reel + stills that turned a peel-off lip combo into a routine moment.",
+        platform: "Instagram",
+        mediaUrl: "https://www.instagram.com/reel/DdRd1DkxpUY/",
+        thumbnailUrl: "/reels/maybelline-lip.jpg",
+        kind: "case_study",
+        brandName: "Maybelline",
+        caseBody:
+          "Brief called for a soft glam demo of Maybelline Super Stay peel-off lip. Kayla filmed face-to-camera application, texture close-ups, and a wear check — then delivered stills for ads.\n\nTurnaround: 4 days. English on-camera.",
+        resultsNote:
+          "Brand reused stills in paid social; Reel drove save-worthy routine content.",
+        featured: true,
+        published: true,
+        sortOrder: 10,
       },
     ],
   });
@@ -382,6 +479,13 @@ async function main() {
   }
 
   await ensureSiteContent();
+
+  const templateCount = await prisma.dealTemplate.count();
+  if (templateCount === 0) {
+    const { DEFAULT_DEAL_TEMPLATES } = await import("../src/lib/deal-templates");
+    await prisma.dealTemplate.createMany({ data: DEFAULT_DEAL_TEMPLATES });
+    console.log("Seeded deal templates.");
+  }
 
   const dealCount = await prisma.deal.count();
   const portfolioCount = await prisma.portfolioItem.count();

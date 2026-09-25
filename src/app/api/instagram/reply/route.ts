@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { logInquiryEvent } from "@/lib/inquiries";
+import { addInquiryMessage, logInquiryEvent } from "@/lib/inquiries";
 import { publishInquiryEvent } from "@/lib/inquiry-bus";
 import { sendInstagramMessage } from "@/lib/instagram";
 
@@ -35,6 +35,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: sent.error }, { status: 502 });
     }
 
+    await addInquiryMessage({
+      inquiryId: inquiry.id,
+      direction: "outbound",
+      body: data.message,
+    });
     await prisma.inquiry.update({
       where: { id: inquiry.id },
       data: { status: inquiry.status === "converted" ? inquiry.status : "replied" },

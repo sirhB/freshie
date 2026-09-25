@@ -57,6 +57,8 @@ export type IncomingIgMessage = {
   messageId: string;
   text: string;
   timestamp: number;
+  mediaUrl?: string | null;
+  mediaType?: string | null;
 };
 
 type MetaMessagingPayload = {
@@ -72,6 +74,10 @@ type MetaMessagingPayload = {
         mid?: string;
         text?: string;
         is_echo?: boolean;
+        attachments?: Array<{
+          type?: string;
+          payload?: { url?: string };
+        }>;
       };
     }>;
   }>;
@@ -83,16 +89,26 @@ export function extractIncomingMessages(body: MetaMessagingPayload): IncomingIgM
 
   for (const entry of body.entry) {
     for (const event of entry.messaging || []) {
-      const text = event.message?.text?.trim();
       const senderId = event.sender?.id;
       const mid = event.message?.mid;
-      if (!text || !senderId || !mid) continue;
+      if (!senderId || !mid) continue;
       if (event.message?.is_echo) continue;
+
+      const attachment = event.message?.attachments?.[0];
+      const mediaUrl = attachment?.payload?.url || null;
+      const mediaType = attachment?.type || null;
+      const text =
+        event.message?.text?.trim() ||
+        (mediaUrl ? `[${mediaType || "media"} attachment]` : "");
+      if (!text) continue;
+
       messages.push({
         senderId,
         messageId: mid,
         text,
         timestamp: event.timestamp || Date.now(),
+        mediaUrl,
+        mediaType,
       });
     }
   }

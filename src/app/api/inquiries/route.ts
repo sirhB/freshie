@@ -30,8 +30,10 @@ export async function GET(req: Request) {
     },
     include: {
       events: { orderBy: { createdAt: "desc" }, take: 8 },
+      messages: { orderBy: { createdAt: "asc" }, take: 40 },
+      attachments: { where: { kind: "dm_media" }, take: 8 },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ leadScore: "desc" }, { createdAt: "desc" }],
   });
 
   return NextResponse.json({

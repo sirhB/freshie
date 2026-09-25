@@ -6,10 +6,13 @@ import { usePathname } from "next/navigation";
 const nav = [
   { href: "/studio", label: "Today" },
   { href: "/studio/deals", label: "Deals" },
+  { href: "/studio/brands", label: "Brands" },
+  { href: "/studio/templates", label: "Templates" },
   { href: "/studio/inquiries", label: "Inquiries" },
   { href: "/studio/pipeline", label: "Pipeline" },
   { href: "/studio/calendar", label: "Calendar" },
   { href: "/studio/payments", label: "Payments" },
+  { href: "/studio/analytics", label: "Analytics" },
   { href: "/studio/site", label: "Site" },
   { href: "/studio/getting-started", label: "Guide" },
   { href: "/studio/settings", label: "Settings" },

@@ -13,7 +13,16 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, email: true, name: true, role: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      alertEmail: true,
+      alertPhone: true,
+      emailAlertsOn: true,
+      smsAlertsOn: true,
+    },
   });
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -29,6 +38,14 @@ export async function GET() {
       hasAppSecret: Boolean(ig.appSecret),
       hasPageToken: Boolean(ig.pageAccessToken),
       hasBusinessId: Boolean(ig.businessAccountId),
+    },
+    alertsConfigured: {
+      resend: Boolean(process.env.RESEND_API_KEY),
+      twilio: Boolean(
+        process.env.TWILIO_ACCOUNT_SID &&
+          process.env.TWILIO_AUTH_TOKEN &&
+          process.env.TWILIO_FROM_NUMBER,
+      ),
     },
   });
 }
@@ -46,6 +63,10 @@ export async function PATCH(req: Request) {
         name: z.string().min(1).max(80).optional(),
         currentPassword: z.string().min(1).optional(),
         newPassword: z.string().min(8).max(128).optional(),
+        alertEmail: z.string().email().nullable().optional().or(z.literal("")),
+        alertPhone: z.string().max(40).nullable().optional().or(z.literal("")),
+        emailAlertsOn: z.boolean().optional(),
+        smsAlertsOn: z.boolean().optional(),
       })
       .parse(body);
 
@@ -75,8 +96,27 @@ export async function PATCH(req: Request) {
         ...(data.newPassword
           ? { passwordHash: await hash(data.newPassword, 10) }
           : {}),
+        ...(data.alertEmail !== undefined
+          ? { alertEmail: data.alertEmail || null }
+          : {}),
+        ...(data.alertPhone !== undefined
+          ? { alertPhone: data.alertPhone || null }
+          : {}),
+        ...(data.emailAlertsOn !== undefined
+          ? { emailAlertsOn: data.emailAlertsOn }
+          : {}),
+        ...(data.smsAlertsOn !== undefined ? { smsAlertsOn: data.smsAlertsOn } : {}),
       },
-      select: { id: true, email: true, name: true, role: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        alertEmail: true,
+        alertPhone: true,
+        emailAlertsOn: true,
+        smsAlertsOn: true,
+      },
     });
 
     return NextResponse.json({ ok: true, user: updated });

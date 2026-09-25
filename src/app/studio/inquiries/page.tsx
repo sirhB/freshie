@@ -10,8 +10,12 @@ export const dynamic = "force-dynamic";
 export default async function InquiriesPage() {
   await auth();
   const inquiries = await prisma.inquiry.findMany({
-    include: { events: { orderBy: { createdAt: "desc" }, take: 8 } },
-    orderBy: { createdAt: "desc" },
+    include: {
+      events: { orderBy: { createdAt: "desc" }, take: 8 },
+      messages: { orderBy: { createdAt: "asc" }, take: 40 },
+      attachments: { where: { kind: "dm_media" }, take: 8 },
+    },
+    orderBy: [{ leadScore: "desc" }, { createdAt: "desc" }],
   });
   const { configured } = getInstagramConfig();
   const fresh = inquiries.filter((i) => i.status === "new").length;

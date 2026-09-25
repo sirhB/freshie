@@ -13,7 +13,16 @@ export default async function SettingsPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, email: true, name: true, role: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      alertEmail: true,
+      alertPhone: true,
+      emailAlertsOn: true,
+      smsAlertsOn: true,
+    },
   });
   if (!user) redirect("/login");
 
@@ -24,7 +33,7 @@ export default async function SettingsPage() {
       <StudioPageHeader
         eyebrow="Account"
         title="Settings"
-        description="Change your password, confirm Instagram connection status, and copy webhook details for Meta."
+        description="Alert destinations, password, Instagram connection, and printable rate card."
       />
       <SettingsClient
         user={user}
@@ -36,6 +45,14 @@ export default async function SettingsPage() {
           hasAppSecret: Boolean(ig.appSecret),
           hasPageToken: Boolean(ig.pageAccessToken),
           hasBusinessId: Boolean(ig.businessAccountId),
+        }}
+        alertsConfigured={{
+          resend: Boolean(process.env.RESEND_API_KEY),
+          twilio: Boolean(
+            process.env.TWILIO_ACCOUNT_SID &&
+              process.env.TWILIO_AUTH_TOKEN &&
+              process.env.TWILIO_FROM_NUMBER,
+          ),
         }}
       />
     </div>

@@ -4,7 +4,16 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-type SettingsUser = { id: string; email: string; name: string; role: string };
+type SettingsUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  alertEmail?: string | null;
+  alertPhone?: string | null;
+  emailAlertsOn?: boolean;
+  smsAlertsOn?: boolean;
+};
 type InstagramStatus = {
   configured: boolean;
   autoReplyEnabled: boolean;
@@ -14,19 +23,26 @@ type InstagramStatus = {
   hasPageToken: boolean;
   hasBusinessId: boolean;
 };
+type AlertsConfigured = { resend: boolean; twilio: boolean };
 
 export function SettingsClient({
   user,
   instagram,
+  alertsConfigured,
 }: {
   user: SettingsUser;
   instagram: InstagramStatus;
+  alertsConfigured: AlertsConfigured;
 }) {
   const router = useRouter();
   const [name, setName] = useState(user.name);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [alertEmail, setAlertEmail] = useState(user.alertEmail || "");
+  const [alertPhone, setAlertPhone] = useState(user.alertPhone || "");
+  const [emailAlertsOn, setEmailAlertsOn] = useState(user.emailAlertsOn !== false);
+  const [smsAlertsOn, setSmsAlertsOn] = useState(Boolean(user.smsAlertsOn));
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -48,6 +64,30 @@ export function SettingsClient({
       return;
     }
     setMessage("Profile saved.");
+    router.refresh();
+  }
+
+  async function saveAlerts(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    setMessage("");
+    const res = await fetch("/api/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        alertEmail: alertEmail || null,
+        alertPhone: alertPhone || null,
+        emailAlertsOn,
+        smsAlertsOn,
+      }),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setError("Could not save alert preferences.");
+      return;
+    }
+    setMessage("Alert preferences saved.");
     router.refresh();
   }
 
@@ -121,6 +161,72 @@ export function SettingsClient({
             Save name
           </button>
         </form>
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-ink/8 bg-white/70 p-5">
+        <h2 className="font-[family-name:var(--font-display)] text-2xl">Email &amp; SMS alerts</h2>
+        <p className="max-w-2xl text-sm text-ink/60">
+          New inquiries and deadline reminders can email (Resend) and/or text (Twilio). Without API
+          keys, alerts still log in Studio — demo mode stays quiet outwardly.
+        </p>
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <div className="rounded-xl border border-ink/8 bg-pearl/60 px-3 py-2">
+            <dt className="text-xs uppercase tracking-[0.14em] text-ink/45">Resend</dt>
+            <dd>{alertsConfigured.resend ? "Configured" : "Demo / unset"}</dd>
+          </div>
+          <div className="rounded-xl border border-ink/8 bg-pearl/60 px-3 py-2">
+            <dt className="text-xs uppercase tracking-[0.14em] text-ink/45">Twilio SMS</dt>
+            <dd>{alertsConfigured.twilio ? "Configured" : "Demo / unset"}</dd>
+          </div>
+        </dl>
+        <form onSubmit={saveAlerts} className="max-w-md space-y-3">
+          <label className="block text-xs uppercase tracking-[0.14em] text-ink/45">
+            Alert email
+            <input
+              type="email"
+              className="mt-1 w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm"
+              value={alertEmail}
+              onChange={(e) => setAlertEmail(e.target.value)}
+              placeholder={user.email}
+            />
+          </label>
+          <label className="block text-xs uppercase tracking-[0.14em] text-ink/45">
+            Alert phone (E.164)
+            <input
+              className="mt-1 w-full rounded-xl border border-ink/10 bg-white px-3 py-2 text-sm"
+              value={alertPhone}
+              onChange={(e) => setAlertPhone(e.target.value)}
+              placeholder="+16465551212"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={emailAlertsOn}
+              onChange={(e) => setEmailAlertsOn(e.target.checked)}
+            />
+            Email alerts on
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={smsAlertsOn}
+              onChange={(e) => setSmsAlertsOn(e.target.checked)}
+            />
+            SMS alerts on
+          </label>
+          <button
+            disabled={busy}
+            className="rounded-full bg-berry px-5 py-2 text-sm font-semibold text-pearl disabled:opacity-60"
+          >
+            Save alerts
+          </button>
+        </form>
+        <p className="text-xs text-ink/45">
+          Env: <code>RESEND_API_KEY</code>, <code>ALERT_FROM_EMAIL</code>,{" "}
+          <code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>,{" "}
+          <code>TWILIO_FROM_NUMBER</code>
+        </p>
       </section>
 
       <section className="space-y-4 rounded-2xl border border-ink/8 bg-white/70 p-5">
@@ -256,6 +362,14 @@ export function SettingsClient({
           <Link href="/studio/getting-started" className="rounded-full border border-ink/10 px-4 py-2 text-sm">
             Getting started guide
           </Link>
+          <a
+            href="/api/rate-card"
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-full border border-ink/10 px-4 py-2 text-sm"
+          >
+            Print rate card
+          </a>
         </div>
       </section>
     </div>
