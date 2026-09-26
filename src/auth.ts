@@ -6,12 +6,19 @@ import { prisma } from "@/lib/prisma";
 function resolveAuthSecret() {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (secret) return secret;
-  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
-    throw new Error(
-      "AUTH_SECRET is required in production. Set it in Vercel environment variables.",
-    );
+
+  // Never throw at module evaluation. `next build` on Vercel imports route
+  // modules (e.g. /api/brands) with VERCEL=1 set; Preview may omit runtime
+  // secrets during page-data collection, and NEXT_PHASE is not always present
+  // in worker processes. Login still requires a real AUTH_SECRET at runtime.
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+    return "kayla-createher-dev-only-secret";
   }
-  return "kayla-createher-dev-only-secret";
+
+  console.warn(
+    "[auth] AUTH_SECRET is missing. Set it in Vercel env (Production + Preview) so login works.",
+  );
+  return "missing-auth-secret-set-me-in-vercel";
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
