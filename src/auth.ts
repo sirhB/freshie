@@ -6,6 +6,14 @@ import { prisma } from "@/lib/prisma";
 function resolveAuthSecret() {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (secret) return secret;
+
+  // `next build` evaluates route modules (e.g. /api/brands). On Vercel, VERCEL=1
+  // is set during build even when Preview env secrets are scoped to runtime only.
+  const isNextBuild = process.env.NEXT_PHASE === "phase-production-build";
+  if (isNextBuild) {
+    return "build-time-placeholder-secret";
+  }
+
   if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
     throw new Error(
       "AUTH_SECRET is required in production. Set it in Vercel environment variables.",
